@@ -233,7 +233,7 @@ Filter_Logs_Message(message) {
 			; Check existing tabs for same buyer, and add to the "Other:" slot
 			tradesInfos := Gui_Trades_Manage_Trades("GET_ALL")
 			Loop % tradesInfos.Max_Index {
-				if (whispName = tradeInfos[A_Index "_Buyer"]) {
+				if (whispName = tradesInfos[A_Index "_Buyer"]) {
 					otherContent := tradesInfos[A_Index "_Other"]
 					if (otherContent != "-" && otherContent != "`n") { ; Already contains text, include previous text
 						if otherContent not contains (Hover to see all messages) ; Only one message in the Other slot.
@@ -247,7 +247,7 @@ Filter_Logs_Message(message) {
 					else { ; Does not contains text, do not include previous text
 						otherText := "(Hover to see all messages)`n" "[" A_Hour ":" A_Min "] " whispMsg
 					}
-					setInfos := { OTHER:otherText, TabID:key }
+					setInfos := { OTHER:otherText, TabID:A_Index }
 					Gui_Trades_Set_Trades_Infos(setInfos)
 				}
 			}
@@ -1767,7 +1767,7 @@ Gui_Trades_Set_Trades_Infos(setInfos){
 		allTrades := Gui_Trades_Manage_Trades("GET_ALL")
 		Loop % allTrades.Max_Index {
 			if ( allTrades[A_Index "_PID"] = oldPID ) {
-				GuiControl,Trades:,% TradesGUI_Controls["PID_Slot_" key],% newPID
+				GuiControl,Trades:,% TradesGUI_Controls["PID_Slot_" A_Index],% newPID
 			}
 		}
 	}
@@ -5213,11 +5213,11 @@ Extract_Font_Files() {
 
 	programFontFolderPath := ProgramValues.Fonts_Folder
 
-	FileInstall, C:\Users\Masato\Documents\GitHub\POE-Trades-Companion\Resources\Fonts\Fontin-SmallCaps.ttf,% programFontFolderPath "\Fontin-SmallCaps.ttf", 1
-	FileInstall, C:\Users\Masato\Documents\GitHub\POE-Trades-Companion\Resources\Fonts\Consolas.ttf,% programFontFolderPath "\Consolas.ttf", 1
-	FileInstall, C:\Users\Masato\Documents\GitHub\POE-Trades-Companion\Resources\Fonts\TC-Symbols.otf,% programFontFolderPath "\TC-Symbols.otf", 1
-	FileInstall, C:\Users\Masato\Documents\GitHub\POE-Trades-Companion\Resources\Fonts\Segoe UI.ttf,% programFontFolderPath "\Segoe UI.ttf", 1
-	FileInstall, C:\Users\Masato\Documents\GitHub\POE-Trades-Companion\Resources\Fonts\Settings.ini,% programFontFolderPath "\Settings.ini", 1
+	FileInstall, Resources\Fonts\Fontin-SmallCaps.ttf,% programFontFolderPath "\Fontin-SmallCaps.ttf", 1
+	FileInstall, Resources\Fonts\Consolas.ttf,% programFontFolderPath "\Consolas.ttf", 1
+	FileInstall, Resources\Fonts\TC-Symbols.otf,% programFontFolderPath "\TC-Symbols.otf", 1
+	FileInstall, Resources\Fonts\Segoe UI.ttf,% programFontFolderPath "\Segoe UI.ttf", 1
+	FileInstall, Resources\Fonts\Settings.ini,% programFontFolderPath "\Settings.ini", 1
 }
 
 Extract_Skin_Files() {
@@ -5230,36 +5230,36 @@ Extract_Skin_Files() {
 ;	System Skin
 	if !( InStr(FileExist(skinFolder "\System"), "D") )
 		FileCreateDir, % skinFolder "\System"
-	FileInstall, C:\Users\Masato\Documents\GitHub\POE-Trades-Companion\Resources\Skins\System\Settings.ini,% skinFolder "\System\Settings.ini", 1
-	FileInstall, C:\Users\Masato\Documents\GitHub\POE-Trades-Companion\Resources\Skins\System\Header.png,% skinFolder "\System\Header.png", 1
-	FileInstall, C:\Users\Masato\Documents\GitHub\POE-Trades-Companion\Resources\Skins\System\Border.png,% skinFolder "\System\Border.png", 1
-	FileInstall, C:\Users\Masato\Documents\GitHub\POE-Trades-Companion\Resources\Skins\System\Icon.png,% skinFolder "\System\Icon.png", 1
+	FileInstall, Resources\Skins\System\Settings.ini,% skinFolder "\System\Settings.ini", 1
+	FileInstall, Resources\Skins\System\Header.png,% skinFolder "\System\Header.png", 1
+	FileInstall, Resources\Skins\System\Border.png,% skinFolder "\System\Border.png", 1
+	FileInstall, Resources\Skins\System\Icon.png,% skinFolder "\System\Icon.png", 1
 
 ;	Path of Exile Skin
 	if !( InStr(FileExist(skinFolder "\Path of Exile"), "D") )
 		FileCreateDir, % skinFolder "\Path of Exile"
-	FileInstall, C:\Users\Masato\Documents\GitHub\POE-Trades-Companion\Resources\Skins\Path Of Exile\Settings.ini,% skinFolder "\Path Of Exile\Settings.ini", 1
-	FileInstall, C:\Users\Masato\Documents\GitHub\POE-Trades-Companion\Resources\Skins\Path Of Exile\ArrowLeft.png,% skinFolder "\Path Of Exile\ArrowLeft.png", 1
-	FileInstall, C:\Users\Masato\Documents\GitHub\POE-Trades-Companion\Resources\Skins\Path Of Exile\ArrowLeftHover.png,% skinFolder "\Path Of Exile\ArrowLeftHover.png", 1
-	FileInstall, C:\Users\Masato\Documents\GitHub\POE-Trades-Companion\Resources\Skins\Path Of Exile\ArrowLeftPress.png,% skinFolder "\Path Of Exile\ArrowLeftPress.png", 1
-	FileInstall, C:\Users\Masato\Documents\GitHub\POE-Trades-Companion\Resources\Skins\Path Of Exile\ArrowRight.png,% skinFolder "\Path Of Exile\ArrowRight.png", 1
-	FileInstall, C:\Users\Masato\Documents\GitHub\POE-Trades-Companion\Resources\Skins\Path Of Exile\ArrowRightHover.png,% skinFolder "\Path Of Exile\ArrowRightHover.png", 1
-	FileInstall, C:\Users\Masato\Documents\GitHub\POE-Trades-Companion\Resources\Skins\Path Of Exile\ArrowRightPress.png,% skinFolder "\Path Of Exile\ArrowRightPress.png", 1
-	FileInstall, C:\Users\Masato\Documents\GitHub\POE-Trades-Companion\Resources\Skins\Path Of Exile\Background.png,% skinFolder "\Path Of Exile\Background.png", 1
-	FileInstall, C:\Users\Masato\Documents\GitHub\POE-Trades-Companion\Resources\Skins\Path Of Exile\ButtonBackground.png,% skinFolder "\Path Of Exile\ButtonBackground.png", 1
-	FileInstall, C:\Users\Masato\Documents\GitHub\POE-Trades-Companion\Resources\Skins\Path Of Exile\ButtonBackgroundHover.png,% skinFolder "\Path Of Exile\ButtonBackgroundHover.png", 1
-	FileInstall, C:\Users\Masato\Documents\GitHub\POE-Trades-Companion\Resources\Skins\Path Of Exile\ButtonBackgroundPress.png,% skinFolder "\Path Of Exile\ButtonBackgroundPress.png", 1
-	FileInstall, C:\Users\Masato\Documents\GitHub\POE-Trades-Companion\Resources\Skins\Path Of Exile\ButtonOrnamentLeft.png,% skinFolder "\Path Of Exile\ButtonOrnamentLeft.png", 1
-	FileInstall, C:\Users\Masato\Documents\GitHub\POE-Trades-Companion\Resources\Skins\Path Of Exile\ButtonOrnamentRight.png,% skinFolder "\Path Of Exile\ButtonOrnamentRight.png", 1
-	FileInstall, C:\Users\Masato\Documents\GitHub\POE-Trades-Companion\Resources\Skins\Path Of Exile\Close.png,% skinFolder "\Path Of Exile\Close.png", 1
-	FileInstall, C:\Users\Masato\Documents\GitHub\POE-Trades-Companion\Resources\Skins\Path Of Exile\CloseHover.png,% skinFolder "\Path Of Exile\CloseHover.png", 1
-	FileInstall, C:\Users\Masato\Documents\GitHub\POE-Trades-Companion\Resources\Skins\Path Of Exile\ClosePress.png,% skinFolder "\Path Of Exile\ClosePress.png", 1
-	FileInstall, C:\Users\Masato\Documents\GitHub\POE-Trades-Companion\Resources\Skins\Path Of Exile\TabActive.png,% skinFolder "\Path Of Exile\TabActive.png", 1
-	FileInstall, C:\Users\Masato\Documents\GitHub\POE-Trades-Companion\Resources\Skins\Path Of Exile\TabInactive.png,% skinFolder "\Path Of Exile\TabInactive.png", 1
-	FileInstall, C:\Users\Masato\Documents\GitHub\POE-Trades-Companion\Resources\Skins\Path Of Exile\TabUnderline.png,% skinFolder "\Path Of Exile\TabUnderline.png", 1
-	FileInstall, C:\Users\Masato\Documents\GitHub\POE-Trades-Companion\Resources\Skins\Path Of Exile\Header.png,% skinFolder "\Path Of Exile\Header.png", 1
-	FileInstall, C:\Users\Masato\Documents\GitHub\POE-Trades-Companion\Resources\Skins\Path Of Exile\Border.png,% skinFolder "\Path Of Exile\Border.png", 1
-	FileInstall, C:\Users\Masato\Documents\GitHub\POE-Trades-Companion\Resources\Skins\Path of Exile\Icon.png,% skinFolder "\Path of Exile\Icon.png", 1
+	FileInstall, Resources\Skins\Path Of Exile\Settings.ini,% skinFolder "\Path Of Exile\Settings.ini", 1
+	FileInstall, Resources\Skins\Path Of Exile\ArrowLeft.png,% skinFolder "\Path Of Exile\ArrowLeft.png", 1
+	FileInstall, Resources\Skins\Path Of Exile\ArrowLeftHover.png,% skinFolder "\Path Of Exile\ArrowLeftHover.png", 1
+	FileInstall, Resources\Skins\Path Of Exile\ArrowLeftPress.png,% skinFolder "\Path Of Exile\ArrowLeftPress.png", 1
+	FileInstall, Resources\Skins\Path Of Exile\ArrowRight.png,% skinFolder "\Path Of Exile\ArrowRight.png", 1
+	FileInstall, Resources\Skins\Path Of Exile\ArrowRightHover.png,% skinFolder "\Path Of Exile\ArrowRightHover.png", 1
+	FileInstall, Resources\Skins\Path Of Exile\ArrowRightPress.png,% skinFolder "\Path Of Exile\ArrowRightPress.png", 1
+	FileInstall, Resources\Skins\Path Of Exile\Background.png,% skinFolder "\Path Of Exile\Background.png", 1
+	FileInstall, Resources\Skins\Path Of Exile\ButtonBackground.png,% skinFolder "\Path Of Exile\ButtonBackground.png", 1
+	FileInstall, Resources\Skins\Path Of Exile\ButtonBackgroundHover.png,% skinFolder "\Path Of Exile\ButtonBackgroundHover.png", 1
+	FileInstall, Resources\Skins\Path Of Exile\ButtonBackgroundPress.png,% skinFolder "\Path Of Exile\ButtonBackgroundPress.png", 1
+	FileInstall, Resources\Skins\Path Of Exile\ButtonOrnamentLeft.png,% skinFolder "\Path Of Exile\ButtonOrnamentLeft.png", 1
+	FileInstall, Resources\Skins\Path Of Exile\ButtonOrnamentRight.png,% skinFolder "\Path Of Exile\ButtonOrnamentRight.png", 1
+	FileInstall, Resources\Skins\Path Of Exile\Close.png,% skinFolder "\Path Of Exile\Close.png", 1
+	FileInstall, Resources\Skins\Path Of Exile\CloseHover.png,% skinFolder "\Path Of Exile\CloseHover.png", 1
+	FileInstall, Resources\Skins\Path Of Exile\ClosePress.png,% skinFolder "\Path Of Exile\ClosePress.png", 1
+	FileInstall, Resources\Skins\Path Of Exile\TabActive.png,% skinFolder "\Path Of Exile\TabActive.png", 1
+	FileInstall, Resources\Skins\Path Of Exile\TabInactive.png,% skinFolder "\Path Of Exile\TabInactive.png", 1
+	FileInstall, Resources\Skins\Path Of Exile\TabUnderline.png,% skinFolder "\Path Of Exile\TabUnderline.png", 1
+	FileInstall, Resources\Skins\Path Of Exile\Header.png,% skinFolder "\Path Of Exile\Header.png", 1
+	FileInstall, Resources\Skins\Path Of Exile\Border.png,% skinFolder "\Path Of Exile\Border.png", 1
+	FileInstall, Resources\Skins\Path of Exile\Icon.png,% skinFolder "\Path of Exile\Icon.png", 1
 }
 
 Extract_Sound_Files() {
@@ -5269,18 +5269,18 @@ Extract_Sound_Files() {
 	global ProgramValues
 	sfxFolder := ProgramValues.SFX_Folder
 
-	FileInstall, C:\Users\Masato\Documents\GitHub\POE-Trades-Companion\Resources\SFX\MM_Tatl_Gleam.wav,% sfxFolder "\MM_Tatl_Gleam.wav", 0
-	FileInstall, C:\Users\Masato\Documents\GitHub\POE-Trades-Companion\Resources\SFX\MM_Tatl_Hey.wav,% sfxFolder "\MM_Tatl_Hey.wav", 0
-	FileInstall, C:\Users\Masato\Documents\GitHub\POE-Trades-Companion\Resources\SFX\WW_MainMenu_CopyErase_Start.wav,% sfxFolder "\WW_MainMenu_CopyErase_Start.wav", 0
-	FileInstall, C:\Users\Masato\Documents\GitHub\POE-Trades-Companion\Resources\SFX\WW_MainMenu_Letter.wav,% sfxFolder "\WW_MainMenu_Letter.wav", 0
+	FileInstall, Resources\SFX\MM_Tatl_Gleam.wav,% sfxFolder "\MM_Tatl_Gleam.wav", 0
+	FileInstall, Resources\SFX\MM_Tatl_Hey.wav,% sfxFolder "\MM_Tatl_Hey.wav", 0
+	FileInstall, Resources\SFX\WW_MainMenu_CopyErase_Start.wav,% sfxFolder "\WW_MainMenu_CopyErase_Start.wav", 0
+	FileInstall, Resources\SFX\WW_MainMenu_Letter.wav,% sfxFolder "\WW_MainMenu_Letter.wav", 0
 }
 
 Extract_Data_Files() {
 	global ProgramValues
 	dataFolder := ProgramValues.Data_Folder
 
-	FileInstall, C:\Users\Masato\Documents\GitHub\POE-Trades-Companion\Resources\Data\Currency_All.txt,% dataFolder "\Currency_All.txt", 1
-	FileInstall, C:\Users\Masato\Documents\GitHub\POE-Trades-Companion\Resources\Data\currencyTradeNames.json,% dataFolder "\currencyTradeNames.json", 1
+	FileInstall, Resources\Data\Currency_All.txt,% dataFolder "\Currency_All.txt", 1
+	FileInstall, Resources\Data\currencyTradeNames.json,% dataFolder "\currencyTradeNames.json", 1
 }
 
 Extract_Others_Files() {
@@ -5290,8 +5290,8 @@ Extract_Others_Files() {
 	global ProgramValues
 	othersFolder := ProgramValues.Others_Folder
 
-	FileInstall, C:\Users\Masato\Documents\GitHub\POE-Trades-Companion\Resources\Others\DonatePaypal.png,% othersFolder "\DonatePaypal.png", 1
-	FileInstall, C:\Users\Masato\Documents\GitHub\POE-Trades-Companion\Resources\Others\icon.png,% othersFolder "\icon.png", 1
+	FileInstall, Resources\Others\DonatePaypal.png,% othersFolder "\DonatePaypal.png", 1
+	FileInstall, Resources\Others\icon.png,% othersFolder "\icon.png", 1
 }
 
 Close_Previous_Program_Instance() {
