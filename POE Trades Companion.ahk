@@ -54,8 +54,6 @@ Start_Script() {
 	global Stats_TradeCurrencyNames 	:= Object() ; Abridged currency names from poe.trade
 	global Stats_RealCurrencyNames 		:= Object() ; All currency full names
 
-	global BuyersInArea := Object() ; All current buyers in the area.
-
 ;	- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	
 	ProgramSettings.Screen_DPI 			:= Get_DPI_Factor() 
@@ -233,7 +231,7 @@ Filter_Logs_Message(message) {
 /*		Filter the logs message to retrieve the required informations we need
 			and send them to the Trades GUI if it is a trade whisper.
  */
-	global ProgramSettings, TradesGUI_Values, BuyersInArea
+	global ProgramSettings, TradesGUI_Values, ProgramValues
 
 	Loop, Parse, message, `n ; For each new individual line since last check
 	{
@@ -346,7 +344,8 @@ Filter_Logs_Message(message) {
 									  ,Time:A_Hour ":" A_Min
 									  ,Other:tradeOther
 									  ,Date:A_YYYY "-" A_MM "-" A_DD
-									  ,Guild:whispGuild}
+									  ,Guild:whispGuild
+									  ,InArea:0}
 					messagesArray := Gui_Trades_Manage_Trades("ADD_NEW", newTradesInfos)
 					Gui_Trades("UPDATE", messagesArray)
 
@@ -366,7 +365,11 @@ Filter_Logs_Message(message) {
 		}
 
 		; Check if a buyer has joined or left the area 
-		if ( RegExMatch( A_LoopField, "^(?:[^ ]+ ){6}(\d+)\] : (.*?) (?:has) (joined|left) (?:the area.*)", subPat ) ) {
+		areaRegexStr := (ProgramValues.debug) ;debug regex
+			? ("^(?:[^ ]+ ){6}(\d+)\](?:.*) : (.*?) (?:has) (joined|left) (?:the area.*)") ; matches ' : {name} has {joined|left} ..' from chat as well 
+			: ("^(?:[^ ]+ ){6}(\d+)\] : (.*?) (?:has) (joined|left) (?:the area.*)") 
+
+		if ( RegExMatch( A_LoopField, areaRegexStr, subPat ) ) {
 			gamePID := subPat1, whispName := subPat2, areaStatus := subPat3
 			TradesGUI_Values.Last_Whisper := whispName
 
@@ -376,11 +379,8 @@ Filter_Logs_Message(message) {
 			Loop % tradesInfos.Max_Index {
 				if (whispName = tradesInfos[A_Index "_Buyer"]) {
 					; Check if the player is already in the area
-					buyerInArea := HasVal(BuyersInArea, tradesInfos[A_Index "_Buyer"])
-
-					if ( areaStatus = "joined" && !buyerInArea) {
-						BuyersInArea.Push(tradesInfos[A_Index "_Buyer"])
-
+					if ( areaStatus = "joined" && !tradesInfos[A_Index "_InArea"]) {
+						tradesInfos[A_Index "_InArea"] := 1
 						; Play sound and alert
 						if ( ProgramSettings.Trade_Toggle = 1 ) && FileExist(ProgramSettings.Trade_Sound_Path) { 
 							SoundPlay,% ProgramSettings.Trade_Sound_Path
@@ -391,14 +391,14 @@ Filter_Logs_Message(message) {
 							DllCall("FlashWindow", UInt, gameHwnd, Int, 1)
 							}
 						}
-					} else if (areaStatus = "left" && buyerInArea) {
-						BuyersInArea.Delete(buyerInArea)
+					} else if (areaStatus = "left" && tradesInfos[A_Index "_InArea"] = 1) {
+						tradesInfos[A_Index "_InArea"] := 0
 					}
 				}
 
 			}
 
-			Gui_Trades("UPDATE", tradesInfos)
+			Gui_Trades("UPDATE", tradesInfos)			
 		}
 		; End of area joined
 	}
@@ -476,7 +476,7 @@ Gui_Trades(mode="", tradeInfos="") {
 ;			Switching tab will clipboard the item's infos if the user enabled
 ;			Is transparent and click-through when there is no trade on queue
 	static
-	global ProgramValues, TradesGUI_Values, TradesGUI_Controls, ProgramSettings, BuyersInArea
+	global ProgramValues, TradesGUI_Values, TradesGUI_Controls, ProgramSettings
 	iniFilePath := ProgramValues.Ini_File
 	programName := ProgramValues.Name
 	programSkinFolderPath := ProgramValues.Skins_Folder
@@ -606,6 +606,7 @@ Gui_Trades(mode="", tradeInfos="") {
 				Gui, Add, Text,% "xp" . " yp" . " w0" . " h0" . " vPIDSlot" index . " hwndPIDSlot" index "Handler +BackgroundTrans" . " c" colorTradesInfos2,% ""
 				Gui, Add, Text,% "xp" . " yp" . " w0" . " h0" . " vDateSlot" index . " hwndDateSlot" index "Handler +BackgroundTrans" . " c" colorTradesInfos2,% ""
 				Gui, Add, Text,% "xp" . " yp" . " w0" . " h0" . " vGuildSlot" index . " hwndGuildSlot" index "Handler +BackgroundTrans" . " c" colorTradesInfos2,% ""
+				Gui, Add, Text,% "xp" . " yp" . " w0" . " h0" . " vInAreaSlot" index . " hwndInAreaSlot" index "Handler +BackgroundTrans" . " c" colorTradesInfos2,% ""
 
 				TradesGUI_Controls.Insert("Buyer_Slot_" index,BuyerSlot%index%Handler)
 				TradesGUI_Controls.Insert("Item_Slot_" index,ItemSlot%index%Handler)
@@ -616,6 +617,7 @@ Gui_Trades(mode="", tradeInfos="") {
 				TradesGUI_Controls.Insert("PID_Slot_" index,PIDSlot%index%Handler)
 				TradesGUI_Controls.Insert("Date_Slot_" index,DateSlot%index%Handler)
 				TradesGUI_Controls.Insert("Guild_Slot_" index,GuildSlot%index%Handler)
+				TradesGUI_Controls.Insert("InArea_Slot_" index,InAreaSlot%index%Handler)
 
 				hexCodes := ["41", "42", "45", "43", "44"] ; 41:Clip/42:Whis/43:Trade/44:Kick/45:Inv
 				ctrlActions := ["Clipboard" , "Whisper", "Invite", "Trade", "Kick"]
@@ -736,6 +738,7 @@ Gui_Trades(mode="", tradeInfos="") {
 				Gui, Add, Text,% "xp" . " yp" . " w0" . " h0" . " vPIDSlot" index . " hwndPIDSlot" index "Handler",% ""
 				Gui, Add, Text,% "xp" . " yp" . " w0" . " h0" . " vDateSlot" index . " hwndDateSlot" index "Handler",% ""
 				Gui, Add, Text,% "xp" . " yp" . " w0" . " h0" . " vGuildSlot" index . " hwndGuildSlot" index "Handler",% ""
+				Gui, Add, Text,% "xp" . " yp" . " w0" . " h0" . " vInAreaSlot" index . " hwndInAreaSlot" index "Handler",% ""
 
 ;				Hide the controls. They will be re-enabled later, based on the current amount of trade requests.
 				GuiControl, Trades:Hide,% TabIMG%index%Handler
@@ -758,6 +761,7 @@ Gui_Trades(mode="", tradeInfos="") {
 				TradesGUI_Controls.Insert("PID_Slot_" index,PIDSlot%index%Handler)
 				TradesGUI_Controls.Insert("Date_Slot_" index,DateSlot%index%Handler)
 				TradesGUI_Controls.Insert("Guild_Slot_" index,GuildSlot%index%Handler)
+				TradesGUI_Controls.Insert("InArea_Slot_" index,InAreaSlot%index%Handler)
 			}
 
 			hexCodes := ["41", "42", "45", "43", "44"] ; 41:Clip/42:Whis/43:Trade/44:Kick/45:Inv
@@ -910,7 +914,7 @@ Gui_Trades(mode="", tradeInfos="") {
 		Loop % tradeInfos.Max_Index {
 			isGuiActive := true
 			; Put an @ symbol on any tab that has a  buyer in the area
-			tabTitle := (HasVal(BuyersInArea, tradeInfos[A_Index "_Buyer"] )) ? A_Index " @" : A_Index	
+			tabTitle := (tradeInfos[A_Index "_InArea"] = 1 ) ? A_Index " #" : A_Index	
 			tabsList .= "|" tabTitle
 			GuiControl, Trades:,% buyerSlot%A_Index%Handler,% tradeInfos[A_Index "_Buyer"]
 			GuiControl, Trades:,% itemSlot%A_Index%Handler,% tradeInfos[A_Index "_Item"]
@@ -921,6 +925,7 @@ Gui_Trades(mode="", tradeInfos="") {
 			GuiControl, Trades:,% OtherSlot%A_Index%Handler,% tradeInfos[A_Index "_Other"]
 			GuiControl, Trades:,% DateSlot%A_Index%Handler,% tradeInfos[A_Index "_Date"]
 			GuiControl, Trades:,% GuildSlot%A_Index%Handler,% tradeInfos[A_Index "_Guild"]
+			GuiControl, Trades:,% InAreaSlot%A_Index%Handler,% tradeInfos[A_Index "_InArea"]
 			if ( A_Index <= maxTabsRow && activeSkin != "System" ) {
 				GuiControl, Trades:Show,% TabIMG%A_Index%Handler
 				GuiControl, Trades:Show,% TabTXT%A_Index%Handler
@@ -1330,7 +1335,7 @@ Gui_Trades_Set_Height(desiredHeight) {
 Gui_Trades_Skinned_Arrow_Left(CtrlHwnd="", GuiEvent="", EventInfo="") {
 ;		Only used when a skin is applied.
 ;		Simulates scrolling through tabs.
-	global TradesGUI_Values, TradesGUI_Controls, BuyersInArea
+	global TradesGUI_Values, TradesGUI_Controls
 	if ( TradesGUI_Values.Cancel_Action ) {
 		TradesGUI_Values.Cancel_Action := 0
 		Return
@@ -1347,7 +1352,7 @@ Gui_Trades_Skinned_Arrow_Left(CtrlHwnd="", GuiEvent="", EventInfo="") {
 			tabIndex := tabsRange.First_Tab+index-2
 			tradesInfos := Gui_Trades_Manage_Trades("GET_ALL")
 
-			tabTitle := (HasVal(BuyersInArea, tradesInfos[tabIndex "_Buyer"])) ? tabIndex " @" : tabIndex
+			tabTitle := (tradesInfos[tabIndex "_InArea"]) ? tabIndex " @" : tabIndex
 			GuiControl,Trades:,% TradesGUI_Controls["Tab_TXT_" index],% tabTitle
 		}
 		Gui_Trades_Skinned_Set_Tab_Images_State("LEFT")
@@ -1357,7 +1362,7 @@ Gui_Trades_Skinned_Arrow_Left(CtrlHwnd="", GuiEvent="", EventInfo="") {
 Gui_Trades_Skinned_Arrow_Right(CtrlHwnd="", GuiEvent="", EventInfo="", goFar=0) {
 ;		Only used when a skin is applied.
 ;		Simulates scrolling through tabs.
-	global TradesGUI_Values, TradesGUI_Controls, BuyersInArea
+	global TradesGUI_Values, TradesGUI_Controls
 
 	if ( TradesGUI_Values.Cancel_Action ) {
 		TradesGUI_Values.Cancel_Action := 0
@@ -1385,7 +1390,7 @@ Gui_Trades_Skinned_Arrow_Right(CtrlHwnd="", GuiEvent="", EventInfo="", goFar=0) 
 			tabIndex := tabsRange.First_Tab+index
 
 			tradesInfos := Gui_Trades_Manage_Trades("GET_ALL")
-			tabTitle := (HasVal(BuyersInArea, tradesInfos[tabIndex "_Buyer"])) ? tabIndex " @" : tabIndex
+			tabTitle := (tradesInfos[tabIndex "_InArea"]) ? tabIndex " @" : tabIndex
 			GuiControl,Trades:,% TradesGUI_Controls["Tab_TXT_" index],% tabTitle
 		}
 		Gui_Trades_Skinned_Set_Tab_Images_State("RIGHT")
@@ -1393,7 +1398,7 @@ Gui_Trades_Skinned_Arrow_Right(CtrlHwnd="", GuiEvent="", EventInfo="", goFar=0) 
 }
 
 Gui_TradeS_Skinned_Get_Tabs_Images_Range() {
-	global TradesGUI_Values, TradesGUI_Controls, ProgramSettings, ProgramValues, BuyersInArea
+	global TradesGUI_Values, TradesGUI_Controls, ProgramSettings, ProgramValues
 
 	GuiControlGet, lastTab, Trades:,% TradesGUI_Controls["Tab_TXT_" TradesGUI_Values.Max_Tabs_Per_Row]
 	RegExMatch(lastTab, "\d+", match), lastTab := match
@@ -1601,6 +1606,7 @@ Gui_Trades_Redraw(msg, params="") {
 			allTrades.1_PID			:= 0
 			allTrades.1_Date		:= A_YYYY "-" A_MM "-" A_DD
 			allTrades.1_Guild		:= ""
+			allTrades.1_InArea		:= 0
 		}
 	}
 	Gui_Trades(msg)
@@ -1728,6 +1734,7 @@ Gui_Trades_Get_Trades_Infos(tabID){
 	GuiControlGet, tabTime, Trades:,% TradesGUI_Controls["Time_Slot_" tabID]
 	GuiControlGet, tabDate, Trades:,% TradesGUI_Controls["Date_Slot_" tabID]
 	GuiControlGet, tabGuild, Trades:,% TradesGUI_Controls["Guild_Slot_" tabID]
+	GuiControlGet, tabInArea, Trades:,% TradesGUI_Controls["InArea_Slot_" tabID]
 
 	if RegExMatch(tabLocation, "(.*)\(Tab:(.*) / Pos:(.*)\)", tabLocationPat) 
 		leagueName := tabLocationPat1, stashName := tabLocationPat2, stashPos := tabLocationPat3
@@ -1754,7 +1761,9 @@ Gui_Trades_Get_Trades_Infos(tabID){
 				,PID:tabPID
 				,Time:tabTime
 				,Date_YYYYMMDD:tabDate
-				,TabID:tabID}
+				,TabID:tabID
+				,InArea:tabInArea}
+
 
 	return tabInfos
 }
@@ -1843,7 +1852,6 @@ Gui_Trades_Set_Trades_Infos(setInfos){
 
 	else if ( other ) {
 		GuiControl,Trades:,% TradesGUI_Controls["Other_Slot_" tabID],% other
-		GuiControl,Trades:,% TradesGUI_Controls["Other_Slot_" tabID],% other
 	}
 }
 
@@ -1852,7 +1860,7 @@ Gui_Trades_Manage_Trades(mode, newItemInfos="", activeTabID=""){
  *			ADD_NEW add the provided infos to a new tab
  *			REMOVE_CURRENT deletes the currently active tab infos
 */
-	global TradesGUI_Controls, BuyersInArea
+	global TradesGUI_Controls
 
 	returnArray := Object()
 	btnID := activeTabID
@@ -1944,6 +1952,15 @@ Gui_Trades_Manage_Trades(mode, newItemInfos="", activeTabID=""){
 			}
 			else break
 		}
+	;	___InArea___
+		Loop {
+			InAreasCount := A_Index
+			GuiControlGet, content, Trades:,% TradesGUI_Controls["InArea_Slot_" A_Index]
+			if ( content != "" ) {
+				returnArray.Insert(A_Index "_InArea", content)
+			}
+			else break
+		}	
 
 		maxCount := (mode = "GET_ALL") ? bcount -1 : bcount ;prevents new tab being created when updating buyers in A_ExitReason
 		maxCount := (maxCount < 0 ) ? 0 , maxCount
@@ -1960,6 +1977,7 @@ Gui_Trades_Manage_Trades(mode, newItemInfos="", activeTabID=""){
 		returnArray.Insert(otherCount "_Other", newItemInfos.Other)
 		returnArray.Insert(datesCount "_Date", newItemInfos.Date)
 		returnArray.Insert(guildsCount "_Guild", newItemInfos.Guild)
+		returnArray.Insert(InAreasCount "_InArea", newItemInfos.InArea)
 	}
 
 	if ( mode = "REMOVE_CURRENT") {
@@ -2109,11 +2127,21 @@ Gui_Trades_Manage_Trades(mode, newItemInfos="", activeTabID=""){
 		counter--
 		GuiControl,Trades:,% TradesGUI_Controls["Guild_Slot_" counter],% ""
 		
-		; Removes buyer from area if buyer has no pending trades
-		buyerInArea := HasVal(BuyersInArea, buyerName)
-		if (buyerInArea && !HasVal(returnArray, buyerName)) {
-			BuyersInArea.Delete(buyerInArea)
-		}
+	;	___InArea___
+			Loop {
+				if ( A_Index < btnID )
+					counter := A_Index
+				else if ( A_Index >= btnID )
+					counter := A_Index+1
+				GuiControlGet, content, Trades:,% TradesGUI_Controls["InArea_Slot_" counter]
+				if ( content ) {
+					index := A_Index
+					returnArray.Insert(index "_InArea", content)
+				}
+				else break
+			}
+			counter--
+			GuiControl,Trades:,% TradesGUI_Controls["InArea_Slot_" counter],% ""
 	}
 	return returnArray
 }
