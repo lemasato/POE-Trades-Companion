@@ -1613,7 +1613,7 @@ Gui_Trades_Check_Duplicate(currentActiveTab) {
 */
 	duplicates := currentActiveTab
 	messagesArray := Gui_Trades_Manage_Trades("GET_ALL")
-	maxIndex := messagesArray.MaxIndex
+	maxIndex := messagesArray.Max_Index
 	currentTabInfos := Gui_Trades_Get_Trades_Infos(currentActiveTab)
 	arrayKey := 1
 	Loop %maxIndex% {
@@ -1623,6 +1623,7 @@ Gui_Trades_Check_Duplicate(currentActiveTab) {
 				duplicates .= "|" A_Index
 				arrayKey++
 			}
+
 		}
 	}
 	Sort, duplicates, D| N R
@@ -1839,7 +1840,7 @@ Gui_Trades_Manage_Trades(mode, newItemInfos="", activeTabID=""){
  *			ADD_NEW add the provided infos to a new tab
  *			REMOVE_CURRENT deletes the currently active tab infos
 */
-	global TradesGUI_Controls
+	global TradesGUI_Controls, BuyersInArea
 
 	returnArray := Object()
 	btnID := activeTabID
@@ -1950,6 +1951,7 @@ Gui_Trades_Manage_Trades(mode, newItemInfos="", activeTabID=""){
 	}
 
 	if ( mode = "REMOVE_CURRENT") {
+		GuiControlGet, buyerName, Trades:,% TradesGUI_Controls["Buyer_Slot_" btnID] ; Get the name of removed buyer for area status
 	;	___BUYERS___
 		Loop {
 			if ( A_Index < btnID )
@@ -2094,9 +2096,13 @@ Gui_Trades_Manage_Trades(mode, newItemInfos="", activeTabID=""){
 		}
 		counter--
 		GuiControl,Trades:,% TradesGUI_Controls["Guild_Slot_" counter],% ""
-
+		
+		; Removes buyer from area if buyer has no pending trades
+		buyerInArea := HasVal(BuyersInArea, buyerName)
+		if (buyerInArea && !HasVal(returnArray, buyerName)) {
+			BuyersInArea.Delete(buyerInArea)
+		}
 	}
-
 	return returnArray
 }
 
