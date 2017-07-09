@@ -313,7 +313,7 @@ Filter_Logs_Message(message) {
 				; Do not add the trade if the same is already in queue
 				tradesExists := 0
 				tradesInfos := Gui_Trades_Manage_Trades("GET_ALL")
-				Loop % tradeInfos.Max_Index {
+				Loop % tradesInfos.Max_Index {
 					buyerContent := tradesInfos[A_Index "_Buyer"], itemContent := tradesInfos[A_Index "_Item"], priceContent := tradesInfos[A_Index "_Price"], locationContent := tradesInfos[A_Index "_Location"], otherContent = tradesInfos[A_Index "_Other"]
 					if (buyerContent=whispName && itemContent=tradeItem && priceContent=tradePrice && locationContent=tradeStash) {
 						tradesExists := 1
