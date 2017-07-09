@@ -244,28 +244,6 @@ Filter_Logs_Message(message) {
 			whispName := whispNameFull.Name, whispGuild := whispNameFull.Guild
 			TradesGUI_Values.Last_Whisper := whispName
 
-			; Check existing tabs for same buyer, and add to the "Other:" slot
-			tradesInfos := Gui_Trades_Manage_Trades("GET_ALL")
-			Loop % tradesInfos.Max_Index {
-				if (whispName = tradesInfos[A_Index "_Buyer"]) {
-					otherContent := tradesInfos[A_Index "_Other"]
-					if (otherContent != "-" && otherContent != "`n") { ; Already contains text, include previous text
-						if otherContent not contains (Hover to see all messages) ; Only one message in the Other slot.
-						{
-							StringReplace, otherContent, otherContent,% "`n",% "",1 ; Remove blank lines
-							otherContent := "[" tradesInfos[A_Index "_Time"] "] " otherContent ; Add timestamp
-						}
-						StringReplace, otherContent, otherContent,% "(Hover to see all messages)`n",% "",1
-						otherText := "(Hover to see all messages)`n" otherContent "`n[" A_Hour ":" A_Min "] " whispMsg
-					}
-					else { ; Does not contains text, do not include previous text
-						otherText := "(Hover to see all messages)`n" "[" A_Hour ":" A_Min "] " whispMsg
-					}
-					setInfos := { OTHER:otherText, TabID:A_Index }
-					Gui_Trades_Set_Trades_Infos(setInfos)
-				}
-			}
-
 			if !WinActive("ahk_pid " gamePID) {
 				if ( ProgramSettings.Whisper_Tray ) {
 					Show_Tray_Notification("Whisper from " whispName, whispMsg)
@@ -358,6 +336,31 @@ Filter_Logs_Message(message) {
 				}
 			}
 			else {
+				; Only add other text if it's not a trade
+				; Check existing tabs for same buyer, and add to the "Other:" slot
+				tradesInfos := Gui_Trades_Manage_Trades("GET_ALL")
+				Loop % tradesInfos.Max_Index {
+					if (whispName = tradesInfos[A_Index "_Buyer"]) {
+						otherContent := tradesInfos[A_Index "_Other"]
+						if (otherContent != "-" && otherContent != "`n") { ; Already contains text, include previous text
+							if otherContent not contains (Hover to see all messages) ; Only one message in the Other slot.
+							{
+								StringReplace, otherContent, otherContent,% "`n",% "",1 ; Remove blank lines
+								otherContent := "[" tradesInfos[A_Index "_Time"] "] " otherContent ; Add timestamp
+							}
+							StringReplace, otherContent, otherContent,% "(Hover to see all messages)`n",% "",1
+							otherText := "(Hover to see all messages)`n" otherContent "`n[" A_Hour ":" A_Min "] " whispMsg
+						}
+						else { ; Does not contains text, do not include previous text
+							otherText := "(Hover to see all messages)`n" "[" A_Hour ":" A_Min "] " whispMsg
+						}
+						setInfos := { OTHER:otherText, TabID:A_Index }
+						Gui_Trades_Set_Trades_Infos(setInfos)
+
+						tradesInfos := Gui_Trades_Manage_Trades("GET_ALL")
+						Gui_Trades("UPDATE", tradesInfos)	
+					}
+				}
 				if ( ProgramSettings.Whisper_Toggle = 1 ) && FileExist(ProgramSettings.Whisper_Sound_Path) { ; Play the sound set for whispers
 					SoundPlay,% ProgramSettings.Whisper_Sound_Path
 				}
@@ -913,9 +916,7 @@ Gui_Trades(mode="", tradeInfos="") {
 		tabsList := "", isGuiActive := false
 		Loop % tradeInfos.Max_Index {
 			isGuiActive := true
-			; Put an @ symbol on any tab that has a  buyer in the area
-			tabTitle := (tradeInfos[A_Index "_InArea"] = 1 ) ? A_Index " #" : A_Index	
-			tabsList .= "|" tabTitle
+			
 			GuiControl, Trades:,% buyerSlot%A_Index%Handler,% tradeInfos[A_Index "_Buyer"]
 			GuiControl, Trades:,% itemSlot%A_Index%Handler,% tradeInfos[A_Index "_Item"]
 			GuiControl, Trades:,% priceSlot%A_Index%Handler,% tradeInfos[A_Index "_Price"]
@@ -926,11 +927,15 @@ Gui_Trades(mode="", tradeInfos="") {
 			GuiControl, Trades:,% DateSlot%A_Index%Handler,% tradeInfos[A_Index "_Date"]
 			GuiControl, Trades:,% GuildSlot%A_Index%Handler,% tradeInfos[A_Index "_Guild"]
 			GuiControl, Trades:,% InAreaSlot%A_Index%Handler,% tradeInfos[A_Index "_InArea"]
+			tabtitle := Get_Tab_Title(A_Index)
+			tabsList .= "|" tabTitle
 			if ( A_Index <= maxTabsRow && activeSkin != "System" ) {
 				GuiControl, Trades:Show,% TabIMG%A_Index%Handler
 				GuiControl, Trades:Show,% TabTXT%A_Index%Handler
 				GuiControl, Trades:,% TabTXT%A_Index%Handler, %tabTitle%
 			}
+			; Put an @ symbol on any tab that has a  buyer in the area
+
 		}
 
 ;		Handle some GUI elements
@@ -1350,9 +1355,8 @@ Gui_Trades_Skinned_Arrow_Left(CtrlHwnd="", GuiEvent="", EventInfo="") {
 		Loop %maxTabsRow% {
 			index := A_Index
 			tabIndex := tabsRange.First_Tab+index-2
-			tradesInfos := Gui_Trades_Manage_Trades("GET_ALL")
 
-			tabTitle := (tradesInfos[tabIndex "_InArea"]) ? tabIndex " @" : tabIndex
+			tabTitle := Get_Tab_Title(tabIndex)
 			GuiControl,Trades:,% TradesGUI_Controls["Tab_TXT_" index],% tabTitle
 		}
 		Gui_Trades_Skinned_Set_Tab_Images_State("LEFT")
@@ -1389,8 +1393,7 @@ Gui_Trades_Skinned_Arrow_Right(CtrlHwnd="", GuiEvent="", EventInfo="", goFar=0) 
 			index := A_Index
 			tabIndex := tabsRange.First_Tab+index
 
-			tradesInfos := Gui_Trades_Manage_Trades("GET_ALL")
-			tabTitle := (tradesInfos[tabIndex "_InArea"]) ? tabIndex " @" : tabIndex
+			tabTitle := Get_Tab_Title(tabIndex)
 			GuiControl,Trades:,% TradesGUI_Controls["Tab_TXT_" index],% tabTitle
 		}
 		Gui_Trades_Skinned_Set_Tab_Images_State("RIGHT")
@@ -6144,7 +6147,7 @@ Fade_Tray_Notification() {
 	Gui, TrayNotification:Destroy
 }
 
-HasVal(object, value) {
+Has_Val(object, value) {
 	if !(IsObject(object)) || (value.Length() = 0){
 		return 0
 	}
@@ -6154,6 +6157,18 @@ HasVal(object, value) {
 		}
 	}
 	return 0
+}
+
+Get_Tab_Title(tabId) {
+	tabInfos := Gui_Trades_Get_Trades_Infos(tabId)
+	if (tabInfos.InArea = 1) {
+		title := tabId " #"
+	} else if (tabInfos.Other != "-" && tabInfos.Other != "'n" && tabInfos.Other != "") {
+		title := tabId " @"
+	} else {
+		title := tabId
+	}
+	return title
 }
 
 
