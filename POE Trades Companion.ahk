@@ -353,8 +353,8 @@ Filter_Logs_Message(message) {
 		}
 
 		; Check if a buyer has joined or left the area 
-		if ( RegExMatch( A_LoopField, "^(?:[^ ]+ ){6}(\d+)\](?:.*) : (.*?) (?:has) (joined|left) (?:the area.*)", subPat ) ) { 
-		; if ( RegExMatch( A_LoopField, "^(?:[^ ]+ ){6}(\d+)\] : (.*?) (?:has) (joined|left) (?:the area.*)", subPat ) ) {
+		; if ( RegExMatch( A_LoopField, "^(?:[^ ]+ ){6}(\d+)\](?:.*) : (.*?) (?:has) (joined|left) (?:the area.*)", subPat ) ) { ; debug regex
+		if ( RegExMatch( A_LoopField, "^(?:[^ ]+ ){6}(\d+)\] : (.*?) (?:has) (joined|left) (?:the area.*)", subPat ) ) {
 			gamePID := subPat1, whispName := subPat2, areaStatus := subPat3
 			TradesGUI_Values.Last_Whisper := whispName
 
