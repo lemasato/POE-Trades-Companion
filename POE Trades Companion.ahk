@@ -198,6 +198,19 @@ Start_Script() {
 		; app / No qual / Level / Unpriced
 		str .= "`n" "2016/10/09 21:30:32 105384166 355 [INFO Client 6416] "
 			str .= " @From 44: wtb Faster Attacks Support (21/20%) in standard (stash """"Shop: poeapp 1""""; left 40, top 21)"
+
+		; 22 Joined
+		str .= "`n" "2016/10/09 21:30:32 105384166 355 [INFO Client 6416] "
+			str .= " : 22 has joined the area."
+
+		; 33 Joined
+		str .= "`n" "2016/10/09 21:30:32 105384166 355 [INFO Client 6416] "
+			str .= " : 33 has joined the area."
+
+		; 22 left
+		str .= "`n" "2016/10/09 21:30:32 105384166 355 [INFO Client 6416] "
+			str .= " : 22 has left the area."
+
 		Filter_Logs_Message(str)
 	}
 
@@ -353,7 +366,6 @@ Filter_Logs_Message(message) {
 		}
 
 		; Check if a buyer has joined or left the area 
-		; if ( RegExMatch( A_LoopField, "^(?:[^ ]+ ){6}(\d+)\](?:.*) : (.*?) (?:has) (joined|left) (?:the area.*)", subPat ) ) { ; debug regex
 		if ( RegExMatch( A_LoopField, "^(?:[^ ]+ ){6}(\d+)\] : (.*?) (?:has) (joined|left) (?:the area.*)", subPat ) ) {
 			gamePID := subPat1, whispName := subPat2, areaStatus := subPat3
 			TradesGUI_Values.Last_Whisper := whispName
@@ -701,7 +713,7 @@ Gui_Trades(mode="", tradeInfos="") {
 
 ;				Tab Pictures
 				Gui, Add, Picture,% "x" xpos*guiScale . " y" ypos*guiScale . " w" 48*guiScale . " h" 20*guiScale " hwndTabIMG" index "Handler" . " vTabIMG" index . " gGui_Trades_Skinned_OnTabSwitch +BackgroundTrans",% programSkinFolderPath "\" activeSkin "\TabInactive.png"
-				Gui, Font,% "Bold Q" fontQual
+				Gui, Font,% "w500 Q" fontQual
 				Gui, Add, Text,% "xp" . " yp+" 3*guiScale . " w" 48*guiScale . " h" 20*guiScale . " hwndTabTXT" index "Handler" . " vTabTXT" index . " gGui_Trades_Skinned_OnTabSwitch +BackgroundTrans 0x01 c" colorTabs,% index
 				Gui, Font, Norm S%fontSize% Q%fontQual%
 
@@ -1332,10 +1344,10 @@ Gui_Trades_Skinned_Arrow_Left(CtrlHwnd="", GuiEvent="", EventInfo="") {
 		index := maxTabsRow
 		Loop %maxTabsRow% {
 			index := A_Index
-			adjustedTabID := tabsRange.First_Tab+index-2
+			tabIndex := tabsRange.First_Tab+index-2
 			tradesInfos := Gui_Trades_Manage_Trades("GET_ALL")
 
-			tabTitle := (HasVal(BuyersInArea, tradesInfos[adjustedTabID "_Buyer"])) ? adjustedTabID "@" : adjustedTabID
+			tabTitle := (HasVal(BuyersInArea, tradesInfos[tabIndex "_Buyer"])) ? tabIndex " @" : tabIndex
 			GuiControl,Trades:,% TradesGUI_Controls["Tab_TXT_" index],% tabTitle
 		}
 		Gui_Trades_Skinned_Set_Tab_Images_State("LEFT")
@@ -1370,10 +1382,10 @@ Gui_Trades_Skinned_Arrow_Right(CtrlHwnd="", GuiEvent="", EventInfo="", goFar=0) 
 		index := maxTabsRow
 		Loop %maxTabsRow% {
 			index := A_Index
-			txtContent := tabsRange.First_Tab+index
+			tabIndex := tabsRange.First_Tab+index
 
 			tradesInfos := Gui_Trades_Manage_Trades("GET_ALL")
-			tabTitle := (HasVal(BuyersInArea, tradesInfos[txtContent "_Buyer"])) ? txtContent "@" : txtContent
+			tabTitle := (HasVal(BuyersInArea, tradesInfos[tabIndex "_Buyer"])) ? tabIndex " @" : tabIndex
 			GuiControl,Trades:,% TradesGUI_Controls["Tab_TXT_" index],% tabTitle
 		}
 		Gui_Trades_Skinned_Set_Tab_Images_State("RIGHT")
