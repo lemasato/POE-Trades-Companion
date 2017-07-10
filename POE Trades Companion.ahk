@@ -110,10 +110,16 @@ Start_Script() {
 	ProgramValues.PID 					:= DllCall("GetCurrentProcessId")
 
 	ProgramValues.Debug := (A_IsCompiled)?(0):(ProgramValues.Debug) ; Prevent from enabling debug on compiled executable
+
 	if FileExist(A_ScriptDir "/ENABLE_DEBUG.txt") {
 		FileRead, fileContent,% A_ScriptDir "/ENABLE_DEBUG.txt"
-		fileContent := StrReplace(fileContent, "`n", "")
-		ProgramValues.Debug := fileContent
+		; Begin ./ENABLED_DEBUG.txt with debug:true and add log strings beginning next line like normal
+		debugRegex := "(?:^debug:)(true|false)([\s\S]*)"
+		if (RegExMatch(fileContent, debugRegex, debugPat)) {
+			ProgramValues.Debug := (debugPat1 = "true") ? 1 : 0
+			ProgramValues.DebugTxt := debugPat2
+		}
+
 	}
 ;	- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -183,45 +189,7 @@ Start_Script() {
 	Create_Tray_Menu()
 
 	if ( ProgramValues["Debug"] ) {
-		; trade / No qual / Level
-		str := "2016/10/09 21:30:32 105384166 355 [INFO Client 6416] "
-			str .= "@From poetrade quality: Hi, I would like to buy your level 10 11% Faster Attacks Support listed for 5 alteration in Legacy (stash tab """"Shop: Gems""""; position: left 10, top 11) Offering 1alch?"
-
-		; trade / No qual / Level / Unpriced
-		str .= "`n" "2016/10/09 21:30:32 105384166 355 [INFO Client 6416] "
-			str .= "@From poetrade quality unpriced: Hi, I would like to buy your level 20 21% Faster Attacks Support in Beta Standard (stash tab """"Shop: poe.trade unpriced""""; position: left 1, top 2)"
-
-		str .= "`n" "2016/10/09 21:30:32 105384166 355 [INFO Client 6416] "
-			str .= "@From poetrade currency: Hi, I'd like to buy your 566 chaos for my 7 exalted in Legacy. watthefuck"
-
-		; app / No qual / Level
-		str .= "`n" "2016/10/09 21:30:32 105384166 355 [INFO Client 6416] "
-			str .= " @From poeapp quality: wtb Faster Attacks Support (30/31%) listed for 1 Orb of Alteration in standard (stash """"Shop: poeapp 1""""; left 30, top 21)"
-
-		; app / No qual / Level / Unpriced
-		str .= "`n" "2016/10/09 21:30:32 105384166 355 [INFO Client 6416] "
-<<<<<<< HEAD
-			str .= " @From 44: wtb Faster Attacks Support (21/20%) in standard (stash """"Shop: poeapp 1""""; left 40, top 21)"
-
-		; 22 Joined
-		str .= "`n" "2016/10/09 21:30:32 105384166 355 [INFO Client 6416] "
-			str .= " : 22 has joined the area."
-
-		; 33 Joined
-		str .= "`n" "2016/10/09 21:30:32 105384166 355 [INFO Client 6416] "
-			str .= " : 33 has joined the area."
-
-		; 22 left
-		str .= "`n" "2016/10/09 21:30:32 105384166 355 [INFO Client 6416] "
-			str .= " : 22 has left the area."
-=======
-			str .= " @From poeapp quality unpriced other: wtb Faster Attacks Support (40/41%) in standard (stash """"Shop: poeapp 1""""; left 40, top 21)"
-
-		str .= "`n" "2016/10/09 21:30:32 105384166 355 [INFO Client 6416] "
-			str .= " @From poeapp quality unpriced other: wtb Faster Attacks Support (40/41%) in standard (stash """"Shop: poeapp 1""""; left 40, top 21)"
->>>>>>> refs/remotes/lemasato/dev
-
-		Filter_Logs_Message(str)
+		Filter_Logs_Message(ProgramValues.DebugTxt)
 	}
 
 	Gui_Trades_Load_Pending_Backup()
@@ -288,11 +256,7 @@ Filter_Logs_Message(message) {
 /*		Filter the logs message to retrieve the required informations we need
 			and send them to the Trades GUI if it is a trade whisper.
  */
-<<<<<<< HEAD
-	global ProgramSettings, TradesGUI_Values, ProgramValues
-=======
-	global ProgramSettings, TradesGUI_Values, Trading_Leagues
->>>>>>> refs/remotes/lemasato/dev
+	global ProgramSettings, TradesGUI_Values, Trading_Leagues, ProgramValues
 
 	Loop, Parse, message, `n ; For each new individual line since last check
 	{
@@ -305,31 +269,6 @@ Filter_Logs_Message(message) {
 			whispName := whispNameFull.Name, whispGuild := whispNameFull.Guild
 			TradesGUI_Values.Last_Whisper := whispName
 
-<<<<<<< HEAD
-=======
-			; Check existing tabs for same buyer, and add to the "Other:" slot
-			tradesInfos := Gui_Trades_Manage_Trades("GET_ALL")
-			Loop % tradesInfos.Max_Index {
-				if (whispName = tradesInfos[A_Index "_Buyer"]) {
-					otherContent := tradesInfos[A_Index "_Other"]
-					if (otherContent != "-" && otherContent != "`n") { ; Already contains text, include previous text
-						if otherContent not contains (Hover to see all messages) ; Only one message in the Other slot.
-						{
-							StringReplace, otherContent, otherContent,% "`n",% "",1 ; Remove blank lines
-							otherContent := "[" tradesInfos[A_Index "_Time"] "] " otherContent ; Add timestamp
-						}
-						StringReplace, otherContent, otherContent,% "(Hover to see all messages)`n",% "",1
-						otherText := "(Hover to see all messages)`n" otherContent "`n[" A_Hour ":" A_Min "] " whispMsg
-					}
-					else { ; Does not contains text, do not include previous text
-						otherText := "(Hover to see all messages)`n" "[" A_Hour ":" A_Min "] " whispMsg
-					}
-					setInfos := { OTHER:otherText, TabID:A_Index }
-					Gui_Trades_Set_Trades_Infos(setInfos)
-				}
-			}
-
->>>>>>> refs/remotes/lemasato/dev
 			if !WinActive("ahk_pid " gamePID) {
 				if ( ProgramSettings.Whisper_Tray ) {
 					Show_Tray_Notification("Whisper from " whispName, whispMsg)
@@ -1677,9 +1616,7 @@ Gui_TradeS_Skinned_Get_Tabs_Images_Range() {
 	global TradesGUI_Values, TradesGUI_Controls, ProgramSettings, ProgramValues
 
 	GuiControlGet, lastTab, Trades:,% TradesGUI_Controls["Tab_NUM_" TradesGUI_Values.Max_Tabs_Per_Row]
-	RegExMatch(lastTab, "\d+", match), lastTab := match
 	GuiControlGet, firstTab, Trades:,% TradesGUI_Controls["Tab_NUM_1"]
-	RegExMatch(firstTab, "\d+", match), firstTab := match
 
 	return {Last_Tab:lastTab,First_Tab:firstTab}
 }
@@ -1728,8 +1665,6 @@ Gui_Trades_Skinned_Show_Tab_Content(showTabID="") {
 	previousID := TradesGUI_Values.Previous_Active_Tab
 	currentID := TradesGUI_Values.Active_Tab
 	previousID := (previousID="")?(1):(previousID)
-	RegExMatch(currentId, "\d+", matchId)
-	currentId := matchId
 	showTabID := (showTabID)?(showTabID):(currentId)
 
 ;	Hide previous tab, show current tab
@@ -3711,6 +3646,14 @@ Get_Control_ToolTip(controlName) {
 	. "`nClick on [Browse] to select a sound file."
 	
 	NotifyWhisperBrowse_TT := NotifyWhisperSound_TT := NotifyWhisperToggle_TT := "Play a sound when you receive a regular whisper"
+	. "`nTick the case to enable."
+	. "`nClick on [Browse] to select a sound file."
+
+	NotifyJoinedBrowse_TT := NotifyJoinedSound_TT := NotifyJoinedToggle_TT := "Play a sound when you a buyer joins the area"
+	. "`nTick the case to enable."
+	. "`nClick on [Browse] to select a sound file."
+
+	NotifyOtherBrowse_TT := NotifyOtherSound_TT := NotifyOtherToggle_TT := "Play a sound when a buyer sends a new message"
 	. "`nTick the case to enable."
 	. "`nClick on [Browse] to select a sound file."
 
@@ -5730,11 +5673,8 @@ Extract_Sound_Files() {
 	FileInstall, Resources\SFX\MM_Tatl_Hey.wav,% sfxFolder "\MM_Tatl_Hey.wav", 0
 	FileInstall, Resources\SFX\WW_MainMenu_CopyErase_Start.wav,% sfxFolder "\WW_MainMenu_CopyErase_Start.wav", 0
 	FileInstall, Resources\SFX\WW_MainMenu_Letter.wav,% sfxFolder "\WW_MainMenu_Letter.wav", 0
-<<<<<<< HEAD
 	FileInstall, Resources\SFX\WW_Get_Rupee.wav,% sfxFolder "\WW_Get_Rupee.wav", 0
 	FileInstall, Resources\SFX\WW_Get_Item.wav,% sfxFolder "\WW_Get_Item.wav", 0
-=======
->>>>>>> refs/remotes/lemasato/dev
 }
 
 Extract_Data_Files() {
