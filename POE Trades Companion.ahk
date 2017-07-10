@@ -64,7 +64,7 @@ Start_Script() {
 	MyDocuments 						:= (RunParameters.MyDocuments)?(RunParameters.MyDocuments):(A_MyDocuments)
 
 	ProgramValues.Name 					:= "POE Trades Companion"
-	ProgramValues.Version 				:= "1.11.1"
+	ProgramValues.Version 				:= "1.11.3"
 	ProgramValues.Debug 				:= "0"
 
 	ProgramValues.Updater_File 			:= "POE-TC-Updater.exe"
@@ -356,7 +356,7 @@ Filter_Logs_Message(message) {
 						if RegExMatch(endOfWhisper, leagueName "(.*)", endOfWhisperPat) {
 							whispLeague 		:= leagueName
 							endOfWhisper 		:= endOfWhisperPat1
-							endOfWhisperPat1	 := ""
+							endOfWhisperPat1	:= ""
 							Break
 						}
 					}
@@ -1396,7 +1396,7 @@ Gui_Trades_Load_Pending_Backup() {
 		messagesArray := Gui_Trades_Manage_Trades("ADD_NEW", thisTrade)
 		Gui_Trades("UPDATE", messagesArray)
 	}
-
+	
 	FileDelete,% ProgramValues.Trades_Backup_File
 }
 
@@ -2075,6 +2075,8 @@ Gui_Trades_Manage_Trades(mode, newItemInfos="", activeTabID=""){
 	returnArray := Object()
 	btnID := activeTabID
 
+	actualTabsCount := 0
+
 	if ( mode = "GET_ALL" || mode = "ADD_NEW") {
 	;	___BUYERS___	
 		Loop {
@@ -2082,6 +2084,7 @@ Gui_Trades_Manage_Trades(mode, newItemInfos="", activeTabID=""){
 			GuiControlGet, content, Trades:,% TradesGUI_Controls["Buyer_Slot_" A_Index]
 			if ( content ) {
 				returnArray.Insert(A_Index "_Buyer", content)
+				actualTabsCount++
 			}
 			else break
 		}
@@ -2172,9 +2175,13 @@ Gui_Trades_Manage_Trades(mode, newItemInfos="", activeTabID=""){
 			else break
 		}	
 
+<<<<<<< HEAD
 		maxCount := (mode = "GET_ALL") ? bcount -1 : bcount ;prevents new tab being created when updating buyers in A_ExitReason
 		maxCount := (maxCount < 0 ) ? 0 , maxCount
 		returnArray.Insert("Max_Index", maxCount)
+=======
+		returnArray.Insert("Max_Index", actualTabsCount)
+>>>>>>> refs/remotes/lemasato/dev
 	}
 
 	if ( mode = "ADD_NEW") {
@@ -2187,7 +2194,11 @@ Gui_Trades_Manage_Trades(mode, newItemInfos="", activeTabID=""){
 		returnArray.Insert(otherCount "_Other", newItemInfos.Other)
 		returnArray.Insert(datesCount "_Date", newItemInfos.Date)
 		returnArray.Insert(guildsCount "_Guild", newItemInfos.Guild)
+<<<<<<< HEAD
 		returnArray.Insert(InAreasCount "_InArea", newItemInfos.InArea)
+=======
+		returnArray.Insert("Max_Index", bCount)
+>>>>>>> refs/remotes/lemasato/dev
 	}
 
 	if ( mode = "REMOVE_CURRENT") {
@@ -6217,8 +6228,6 @@ Gui_Trades_Save_Pending_Backup() {
 	allTrades := Gui_Trades_Manage_Trades("GET_ALL")
 	FileDelete,% ProgramValues.Trades_Backup_File
 	for key, element in allTrades {
-		if (key = "Max_Index")
-			element--
 		IniWrite,% element,% ProgramValues.Trades_Backup_File,GENERAL,% key
 	}
 }
@@ -6478,4 +6487,6 @@ Get_Tab_Title(tabId) {
 #Include %A_ScriptDir%/Resources/AHK/
 #Include BinaryEncodingDecoding.ahk
 #Include JSON.ahk
+#Include C:\Users\Masato\Documents\AutoHotkey\Lib
+#Include Class_ImageButton.ahk  
 ; #Include %A_ScriptDir%/Resources/AHK/BetaFuncs.ahk
