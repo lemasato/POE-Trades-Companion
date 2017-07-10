@@ -2175,13 +2175,7 @@ Gui_Trades_Manage_Trades(mode, newItemInfos="", activeTabID=""){
 			else break
 		}	
 
-<<<<<<< HEAD
-		maxCount := (mode = "GET_ALL") ? bcount -1 : bcount ;prevents new tab being created when updating buyers in A_ExitReason
-		maxCount := (maxCount < 0 ) ? 0 , maxCount
-		returnArray.Insert("Max_Index", maxCount)
-=======
 		returnArray.Insert("Max_Index", actualTabsCount)
->>>>>>> refs/remotes/lemasato/dev
 	}
 
 	if ( mode = "ADD_NEW") {
@@ -2194,11 +2188,8 @@ Gui_Trades_Manage_Trades(mode, newItemInfos="", activeTabID=""){
 		returnArray.Insert(otherCount "_Other", newItemInfos.Other)
 		returnArray.Insert(datesCount "_Date", newItemInfos.Date)
 		returnArray.Insert(guildsCount "_Guild", newItemInfos.Guild)
-<<<<<<< HEAD
 		returnArray.Insert(InAreasCount "_InArea", newItemInfos.InArea)
-=======
 		returnArray.Insert("Max_Index", bCount)
->>>>>>> refs/remotes/lemasato/dev
 	}
 
 	if ( mode = "REMOVE_CURRENT") {
@@ -6487,6 +6478,6 @@ Get_Tab_Title(tabId) {
 #Include %A_ScriptDir%/Resources/AHK/
 #Include BinaryEncodingDecoding.ahk
 #Include JSON.ahk
-#Include C:\Users\Masato\Documents\AutoHotkey\Lib
-#Include Class_ImageButton.ahk  
+; #Include C:\Users\Masato\Documents\AutoHotkey\Lib ; Dont have these files \\ not implemented yet?
+; #Include Class_ImageButton.ahk  
 ; #Include %A_ScriptDir%/Resources/AHK/BetaFuncs.ahk
