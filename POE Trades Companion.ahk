@@ -380,12 +380,13 @@ Filter_Logs_Message(message) {
 
 			; Check if player has pending trade
 			tradesInfos := Gui_Trades_Manage_Trades("GET_ALL")
-			
+			updateCount := 0
 			Loop % tradesInfos.Max_Index {
 				if (whispName = tradesInfos[A_Index "_Buyer"]) {
 					; Check if the player is already in the area
 					if ( areaStatus = "joined" && !tradesInfos[A_Index "_InArea"]) {
 						tradesInfos[A_Index "_InArea"] := 1
+						updateCount ++
 						; Play sound and alert
 						if ( ProgramSettings.Joined_Toggle = 1 ) && FileExist(ProgramSettings.Joined_Sound_Path) { 
 							SoundPlay,% ProgramSettings.Joined_Sound_Path
@@ -398,12 +399,15 @@ Filter_Logs_Message(message) {
 						}
 					} else if (areaStatus = "left" && tradesInfos[A_Index "_InArea"] = 1) {
 						tradesInfos[A_Index "_InArea"] := 0
+						updateCount++
 					}
 				}
-
+			}
+			if ( updateCount > 0 ) {
+				Gui_Trades("UPDATE", tradesInfos)			
 			}
 
-			Gui_Trades("UPDATE", tradesInfos)			
+
 		}
 		; End of area joined
 	}
@@ -722,6 +726,7 @@ Gui_Trades(mode="", tradeInfos="") {
 				Gui, Add, Picture,% "x" xpos*guiScale . " y" ypos*guiScale . " w" 48*guiScale . " h" 20*guiScale " hwndTabIMG" index "Handler" . " vTabIMG" index . " gGui_Trades_Skinned_OnTabSwitch +BackgroundTrans",% programSkinFolderPath "\" activeSkin "\TabInactive.png"
 				Gui, Font,% "w500 Q" fontQual
 				Gui, Add, Text,% "xp" . " yp+" 3*guiScale . " w" 48*guiScale . " h" 20*guiScale . " hwndTabTXT" index "Handler" . " vTabTXT" index . " gGui_Trades_Skinned_OnTabSwitch +BackgroundTrans 0x01 c" colorTabs,% index
+				Gui, Add, Text,% "xp" . " yp" . " w0" . " h0" . " vTabNum" index . " hwndTabNum" index "Handler Hidden",% index
 				Gui, Font, Norm S%fontSize% Q%fontQual%
 
 ;				Buyer / Item / ... Static Text
@@ -748,8 +753,10 @@ Gui_Trades(mode="", tradeInfos="") {
 ;				Hide the controls. They will be re-enabled later, based on the current amount of trade requests.
 				GuiControl, Trades:Hide,% TabIMG%index%Handler
 				GuiControl, Trades:Hide,% TabTXT%index%Handler
+				GuiControl, Trades:Hide,% TabNUM%index%Handler
 				TradesGUI_Controls.Insert("Tab_IMG_" index,TabIMG%index%Handler)
 				TradesGUI_Controls.Insert("Tab_TXT_" index,TabTXT%index%Handler)
+				TradesGUI_Controls.Insert("Tab_NUM_" index,TabNUM%index%Handler)
 
 				GuiControl, Trades:Hide,BuyerSlot%index%
 				GuiControl, Trades:Hide,ItemSlot%index%
@@ -935,6 +942,7 @@ Gui_Trades(mode="", tradeInfos="") {
 				GuiControl, Trades:Show,% TabIMG%A_Index%Handler
 				GuiControl, Trades:Show,% TabTXT%A_Index%Handler
 				GuiControl, Trades:,% TabTXT%A_Index%Handler, %tabTitle%
+				GuiControl, Trades:,% TabNum%A_Index%Handler, %A_Index%
 			}
 			; Put an @ symbol on any tab that has a  buyer in the area
 
@@ -972,6 +980,7 @@ Gui_Trades(mode="", tradeInfos="") {
 			tabDeleted := tabsCount+1
 			GuiControl, Trades:Hide,% TabIMG%tabDeleted%Handler
 			GuiControl, Trades:Hide,% TabTXT%tabDeleted%Handler
+			GuiControl, Trades:Hide,% TabNUM%tabDeleted%Handler
 
 			Loop 9 { ; Hide or show the controls.
 				GuiControl, Trades:%showState%,% CustomBtn%A_Index%Handler
@@ -1106,10 +1115,10 @@ Gui_Trades(mode="", tradeInfos="") {
 	Gui_Trades_Skinned_OnTabSwitch:
 		Gui, Trades:Submit, NoHide
 
-		if RegExMatch(A_GuiControl, "TabIMG|TabTXT") {
+		if RegExMatch(A_GuiControl, "TabIMG|TabTXT|TabNUM") {
 			RegExMatch(A_GuiControl, "\d+", btnID)
-			GuiControlGet, tabId, Trades:,% TradesGUI_Controls["Tab_TXT_" btnID]
-			tabId := Get_Tab_Id_From_Title(tabId)
+			GuiControlGet, tabId, Trades:,% TradesGUI_Controls["Tab_NUM_" btnID]
+			RegExMatch(tabId, "\d+", tabID)
 			TradesGUI_Values.Active_Tab := tabID
 		}
 
@@ -1360,6 +1369,7 @@ Gui_Trades_Skinned_Arrow_Left(CtrlHwnd="", GuiEvent="", EventInfo="") {
 
 			tabTitle := Get_Tab_Title(tabIndex)
 			GuiControl,Trades:,% TradesGUI_Controls["Tab_TXT_" index],% tabTitle
+			GuiControl,Trades:,% TradesGUI_Controls["Tab_NUM_" index],% tabIndex
 		}
 		Gui_Trades_Skinned_Set_Tab_Images_State("LEFT")
 	}	
@@ -1397,6 +1407,7 @@ Gui_Trades_Skinned_Arrow_Right(CtrlHwnd="", GuiEvent="", EventInfo="", goFar=0) 
 
 			tabTitle := Get_Tab_Title(tabIndex)
 			GuiControl,Trades:,% TradesGUI_Controls["Tab_TXT_" index],% tabTitle
+			GuiControl,Trades:,% TradesGUI_Controls["Tab_NUM_" index],% tabIndex
 		}
 		Gui_Trades_Skinned_Set_Tab_Images_State("RIGHT")
 	}
@@ -1405,11 +1416,10 @@ Gui_Trades_Skinned_Arrow_Right(CtrlHwnd="", GuiEvent="", EventInfo="", goFar=0) 
 Gui_TradeS_Skinned_Get_Tabs_Images_Range() {
 	global TradesGUI_Values, TradesGUI_Controls, ProgramSettings, ProgramValues
 
-	GuiControlGet, lastTab, Trades:,% TradesGUI_Controls["Tab_TXT_" TradesGUI_Values.Max_Tabs_Per_Row]
-	lastTab := Get_Tab_Id_From_Title(lastTab)
-	GuiControlGet, firstTab, Trades:,% TradesGUI_Controls["Tab_TXT_1"]
-	firstTab := Get_Tab_Id_From_Title(firstTab)
-	
+	GuiControlGet, lastTab, Trades:,% TradesGUI_Controls["Tab_NUM_" TradesGUI_Values.Max_Tabs_Per_Row]
+	RegExMatch(lastTab, "\d+", match), lastTab := match
+	GuiControlGet, firstTab, Trades:,% TradesGUI_Controls["Tab_NUM_1"]
+	RegExMatch(firstTab, "\d+", match), firstTab := match
 
 	return {Last_Tab:lastTab,First_Tab:firstTab}
 }
@@ -1458,7 +1468,8 @@ Gui_Trades_Skinned_Show_Tab_Content(showTabID="") {
 	previousID := TradesGUI_Values.Previous_Active_Tab
 	currentID := TradesGUI_Values.Active_Tab
 	previousID := (previousID="")?(1):(previousID)
-	currentId := Get_Tab_Id_From_Title(currentId)
+	RegExMatch(currentId, "\d+", matchId)
+	currentId := matchId
 	showTabID := (showTabID)?(showTabID):(currentId)
 
 ;	Hide previous tab, show current tab
@@ -2138,7 +2149,7 @@ Gui_Trades_Manage_Trades(mode, newItemInfos="", activeTabID=""){
 				else if ( A_Index >= btnID )
 					counter := A_Index+1
 				GuiControlGet, content, Trades:,% TradesGUI_Controls["InArea_Slot_" counter]
-				if ( content ) {
+				if ( content != "" ) {
 					index := A_Index
 					returnArray.Insert(index "_InArea", content)
 				}
@@ -2479,7 +2490,7 @@ Gui_Settings() {
 				; Tab Settings Info
 				Gui, Add, Text,xp+10 yp+15 BackgroundTrans,Set a custom tab notification symbol
 				Gui, Add, Text,xp yp+15 BackgroundTrans,Input added after Tab ID by default
-				Gui, Add, Text,xp yp+15 BackgroundTrans,Add `%id`% to change position: +`%id`%+
+				Gui, Add, Text,xp yp+15 BackgroundTrans,Adding `%id`% will output the Tab ID 
 				; Tab Joined Group
 				Gui, Add, Checkbox, xp yp+20 vTabJoinedToggle hwndTabJoinedToggleHandler,Joined
 				Gui, Add, Edit, xp+50 yp-2 w80 h17 vTabJoinedSymbol hwndTabJoinedSymbolHandler
@@ -3212,7 +3223,7 @@ Gui_Settings_Get_Settings_Arrays() {
 	returnArray.NOTIFICATIONS_KeysArray := Object()
 	returnArray.NOTIFICATIONS_KeysArray.Insert(0, "Trade_Toggle", "Trade_Sound", "Trade_Sound_Path", "Whisper_Toggle", "Whisper_Sound", "Whisper_Sound_Path", "Joined_Toggle", "Joined_Sound", "Joined_Sound_Path", "Other_Toggle", "Other_Sound", "Other_Sound_Path", "Tab_Joined_Toggle", "Tab_Joined_Symbol","Tab_Other_Toggle", "Tab_Other_Symbol", "Whisper_Tray", "Whisper_Flash")
 	returnArray.NOTIFICATIONS_DefaultValues := Object()
-	returnArray.NOTIFICATIONS_DefaultValues.Insert(0, "1", "WW_MainMenu_Letter.wav", programSFXFolderPath "\WW_MainMenu_Letter.wav", "0", "None", "", "1", "WW_MainMenu_Letter.wav", programSFXFolderPath "\WW_MainMenu_Letter.wav", "0", "None", "", "1", "#", "1", "@", "1", "0")
+	returnArray.NOTIFICATIONS_DefaultValues.Insert(0, "1", "WW_MainMenu_Letter.wav", programSFXFolderPath "\WW_MainMenu_Letter.wav", "0", "None", "", "1", "WW_Get_Item.wav", programSFXFolderPath "\WW_Get_Item.wav", "0", "None", "", "1", "#", "1", "@", "1", "0")
 
 	returnArray.HOTKEYS_ADVANCED_HandlersArray := Object()
 	returnArray.HOTKEYS_ADVANCED_HandlersKeysArray := Object()
@@ -3442,7 +3453,12 @@ Get_Control_ToolTip(controlName) {
 	NotifyWhisperBrowse_TT := NotifyWhisperSound_TT := NotifyWhisperToggle_TT := "Play a sound when you receive a regular whisper"
 	. "`nTick the case to enable."
 	. "`nClick on [Browse] to select a sound file."
-	
+
+	TabJoinedToggle_TT := TabJoinedSymbol_TT := TabOtherToggle_TT := TabOtherSymbol_TT := "Add a notification to tab when buyer joins or whispers"
+	. "`nInput is added after the Tab ID by default"
+	. "`nYou can use %id% to position the Tab ID, e.g. @ %id% @ "
+	. "`nTick the case to enable."
+
 	NotifyWhisperTray_TT := "Show a tray notification when you receive"
 	. "`na whisper while the game window is not active."
 
@@ -5454,6 +5470,8 @@ Extract_Sound_Files() {
 	FileInstall, Resources\SFX\MM_Tatl_Hey.wav,% sfxFolder "\MM_Tatl_Hey.wav", 0
 	FileInstall, Resources\SFX\WW_MainMenu_CopyErase_Start.wav,% sfxFolder "\WW_MainMenu_CopyErase_Start.wav", 0
 	FileInstall, Resources\SFX\WW_MainMenu_Letter.wav,% sfxFolder "\WW_MainMenu_Letter.wav", 0
+	FileInstall, Resources\SFX\WW_Get_Rupee.wav,% sfxFolder "\WW_Get_Rupee.wav", 0
+	FileInstall, Resources\SFX\WW_Get_Item.wav,% sfxFolder "\WW_Get_Item.wav", 0
 }
 
 Extract_Data_Files() {
@@ -6253,50 +6271,6 @@ Get_Tab_Title(tabId) {
 		return tabId
 	}
 }
-
-; Strip Tab TItle
-Get_Tab_Id_From_Title(tabTitle) {
-	global ProgramSettings
-	tabId := tabTitle
-	; Escape the symbols for regex match
-	joinedSymbol := Escape_Tab_Symbol(ProgramSettings.Tab_Joined_Symbol)
-	otherSymbol := Escape_Tab_Symbol(ProgramSettings.Tab_Other_Symbol)
-	; Create Regex for tab title from symbol string
-	if ( RegExMatch(joinedSymbol, "(.*)(?:%id%)(.*)", subpat) ) {
-		beforePat = (?:%subpat1%)
-		idPat = (\d+)
-		afterPat = (?:%subpat2%)
-		joinedRegExStr := beforePat . idPat . afterPat
-	} else {
-		joinedRegExStr = (^\d+) (?:%joinedSymbol%) 
-	}
-	if ( RegExMatch(otherSymbol, "(.*)(?:%id%)(.*)", subpat) ) {
-		beforePat = (?:%subpat1%)
-		idPat = (\d+)
-		afterPat = (?:%subpat2%)
-		otherRegExStr := beforePat . idPat . afterPat
-	} else {
-		otherRegExStr = (^\d+) (?:%otherSymbol%) 
-	}
-	allRegExStr := {joined:joinedRegExStr, other:otherRegExStr}
-
-	for regExName, regExStr in allRegExStr {
-		if RegExMatch(tabId, regexStr, match) {
-			tabId := match1
-		}
-	}
-	return tabId
-
-}
-
-Escape_Tab_Symbol(symbol) {
-	Loop, Parse, % "\.*?+[{|()^$"
-		symbol := StrReplace(symbol, A_LoopField, "\" A_LoopField)
-	return symbol
-}
-
-
-
 
 #Include %A_ScriptDir%/Resources/AHK/
 #Include BinaryEncodingDecoding.ahk
