@@ -361,7 +361,9 @@ Filter_Logs_Message(message) {
 						Gui_Trades("UPDATE", tradesInfos)	
 					}
 				}
-				if ( ProgramSettings.Whisper_Toggle = 1 ) && FileExist(ProgramSettings.Whisper_Sound_Path) { ; Play the sound set for whispers
+				if ( ProgramSettings.Other_Toggle = 1 ) && FileExist(ProgramSettings.Other_Sound_Path) { ; Play the sound set for other text
+					SoundPlay,% ProgramSettings.Other_Sound_Path
+				} else if ( ProgramSettings.Whisper_Toggle = 1 ) && FileExist(ProgramSettings.Whisper_Sound_Path) { ; Play the sound set for whispers
 					SoundPlay,% ProgramSettings.Whisper_Sound_Path
 				}
 			}
@@ -378,15 +380,16 @@ Filter_Logs_Message(message) {
 
 			; Check if player has pending trade
 			tradesInfos := Gui_Trades_Manage_Trades("GET_ALL")
-			
+			updateCount := 0
 			Loop % tradesInfos.Max_Index {
 				if (whispName = tradesInfos[A_Index "_Buyer"]) {
 					; Check if the player is already in the area
 					if ( areaStatus = "joined" && !tradesInfos[A_Index "_InArea"]) {
 						tradesInfos[A_Index "_InArea"] := 1
+						updateCount ++
 						; Play sound and alert
-						if ( ProgramSettings.Trade_Toggle = 1 ) && FileExist(ProgramSettings.Trade_Sound_Path) { 
-							SoundPlay,% ProgramSettings.Trade_Sound_Path
+						if ( ProgramSettings.Joined_Toggle = 1 ) && FileExist(ProgramSettings.Joined_Sound_Path) { 
+							SoundPlay,% ProgramSettings.Joined_Sound_Path
 						}
 						if !WinActive("ahk_pid " gamePID) {
 							if ( ProgramSettings.Whisper_Flash ) {
@@ -396,12 +399,15 @@ Filter_Logs_Message(message) {
 						}
 					} else if (areaStatus = "left" && tradesInfos[A_Index "_InArea"] = 1) {
 						tradesInfos[A_Index "_InArea"] := 0
+						updateCount++
 					}
 				}
-
+			}
+			if ( updateCount > 0 ) {
+				Gui_Trades("UPDATE", tradesInfos)			
 			}
 
-			Gui_Trades("UPDATE", tradesInfos)			
+
 		}
 		; End of area joined
 	}
@@ -720,6 +726,7 @@ Gui_Trades(mode="", tradeInfos="") {
 				Gui, Add, Picture,% "x" xpos*guiScale . " y" ypos*guiScale . " w" 48*guiScale . " h" 20*guiScale " hwndTabIMG" index "Handler" . " vTabIMG" index . " gGui_Trades_Skinned_OnTabSwitch +BackgroundTrans",% programSkinFolderPath "\" activeSkin "\TabInactive.png"
 				Gui, Font,% "w500 Q" fontQual
 				Gui, Add, Text,% "xp" . " yp+" 3*guiScale . " w" 48*guiScale . " h" 20*guiScale . " hwndTabTXT" index "Handler" . " vTabTXT" index . " gGui_Trades_Skinned_OnTabSwitch +BackgroundTrans 0x01 c" colorTabs,% index
+				Gui, Add, Text,% "xp" . " yp" . " w0" . " h0" . " vTabNum" index . " hwndTabNum" index "Handler Hidden",% index
 				Gui, Font, Norm S%fontSize% Q%fontQual%
 
 ;				Buyer / Item / ... Static Text
@@ -746,8 +753,10 @@ Gui_Trades(mode="", tradeInfos="") {
 ;				Hide the controls. They will be re-enabled later, based on the current amount of trade requests.
 				GuiControl, Trades:Hide,% TabIMG%index%Handler
 				GuiControl, Trades:Hide,% TabTXT%index%Handler
+				GuiControl, Trades:Hide,% TabNUM%index%Handler
 				TradesGUI_Controls.Insert("Tab_IMG_" index,TabIMG%index%Handler)
 				TradesGUI_Controls.Insert("Tab_TXT_" index,TabTXT%index%Handler)
+				TradesGUI_Controls.Insert("Tab_NUM_" index,TabNUM%index%Handler)
 
 				GuiControl, Trades:Hide,BuyerSlot%index%
 				GuiControl, Trades:Hide,ItemSlot%index%
@@ -933,6 +942,7 @@ Gui_Trades(mode="", tradeInfos="") {
 				GuiControl, Trades:Show,% TabIMG%A_Index%Handler
 				GuiControl, Trades:Show,% TabTXT%A_Index%Handler
 				GuiControl, Trades:,% TabTXT%A_Index%Handler, %tabTitle%
+				GuiControl, Trades:,% TabNum%A_Index%Handler, %A_Index%
 			}
 			; Put an @ symbol on any tab that has a  buyer in the area
 
@@ -970,6 +980,7 @@ Gui_Trades(mode="", tradeInfos="") {
 			tabDeleted := tabsCount+1
 			GuiControl, Trades:Hide,% TabIMG%tabDeleted%Handler
 			GuiControl, Trades:Hide,% TabTXT%tabDeleted%Handler
+			GuiControl, Trades:Hide,% TabNUM%tabDeleted%Handler
 
 			Loop 9 { ; Hide or show the controls.
 				GuiControl, Trades:%showState%,% CustomBtn%A_Index%Handler
@@ -1104,9 +1115,9 @@ Gui_Trades(mode="", tradeInfos="") {
 	Gui_Trades_Skinned_OnTabSwitch:
 		Gui, Trades:Submit, NoHide
 
-		if RegExMatch(A_GuiControl, "TabIMG|TabTXT") {
+		if RegExMatch(A_GuiControl, "TabIMG|TabTXT|TabNUM") {
 			RegExMatch(A_GuiControl, "\d+", btnID)
-			GuiControlGet, tabID, Trades:,% TradesGUI_Controls["Tab_TXT_" btnID]
+			GuiControlGet, tabId, Trades:,% TradesGUI_Controls["Tab_NUM_" btnID]
 			RegExMatch(tabId, "\d+", tabID)
 			TradesGUI_Values.Active_Tab := tabID
 		}
@@ -1358,6 +1369,7 @@ Gui_Trades_Skinned_Arrow_Left(CtrlHwnd="", GuiEvent="", EventInfo="") {
 
 			tabTitle := Get_Tab_Title(tabIndex)
 			GuiControl,Trades:,% TradesGUI_Controls["Tab_TXT_" index],% tabTitle
+			GuiControl,Trades:,% TradesGUI_Controls["Tab_NUM_" index],% tabIndex
 		}
 		Gui_Trades_Skinned_Set_Tab_Images_State("LEFT")
 	}	
@@ -1395,6 +1407,7 @@ Gui_Trades_Skinned_Arrow_Right(CtrlHwnd="", GuiEvent="", EventInfo="", goFar=0) 
 
 			tabTitle := Get_Tab_Title(tabIndex)
 			GuiControl,Trades:,% TradesGUI_Controls["Tab_TXT_" index],% tabTitle
+			GuiControl,Trades:,% TradesGUI_Controls["Tab_NUM_" index],% tabIndex
 		}
 		Gui_Trades_Skinned_Set_Tab_Images_State("RIGHT")
 	}
@@ -1403,11 +1416,10 @@ Gui_Trades_Skinned_Arrow_Right(CtrlHwnd="", GuiEvent="", EventInfo="", goFar=0) 
 Gui_TradeS_Skinned_Get_Tabs_Images_Range() {
 	global TradesGUI_Values, TradesGUI_Controls, ProgramSettings, ProgramValues
 
-	GuiControlGet, lastTab, Trades:,% TradesGUI_Controls["Tab_TXT_" TradesGUI_Values.Max_Tabs_Per_Row]
+	GuiControlGet, lastTab, Trades:,% TradesGUI_Controls["Tab_NUM_" TradesGUI_Values.Max_Tabs_Per_Row]
 	RegExMatch(lastTab, "\d+", match), lastTab := match
-	GuiControlGet, firstTab, Trades:,% TradesGUI_Controls["Tab_TXT_1"]
-	RegExMatch(firstTab, "\d+", match), firstTab := match	
-	
+	GuiControlGet, firstTab, Trades:,% TradesGUI_Controls["Tab_NUM_1"]
+	RegExMatch(firstTab, "\d+", match), firstTab := match
 
 	return {Last_Tab:lastTab,First_Tab:firstTab}
 }
@@ -2137,7 +2149,7 @@ Gui_Trades_Manage_Trades(mode, newItemInfos="", activeTabID=""){
 				else if ( A_Index >= btnID )
 					counter := A_Index+1
 				GuiControlGet, content, Trades:,% TradesGUI_Controls["InArea_Slot_" counter]
-				if ( content ) {
+				if ( content != "" ) {
 					index := A_Index
 					returnArray.Insert(index "_InArea", content)
 				}
@@ -2210,7 +2222,7 @@ Gui_Settings() {
 	Gui, Settings:New, +AlwaysOnTop +SysMenu -MinimizeBox -MaximizeBox +OwnDialogs +LabelGui_Settings_ hwndSettingsHandler,% programName " - Settings"
 	Gui, Settings:Default
 
-	tabsList := "Settings|Customization|Customization Appearance|Customization Custom Buttons|Customization Smaller Buttons|Hotkeys|Hotkeys Basic|Hotkeys Advanced|Hotkeys Special"
+	tabsList := "Settings|Customization|Customization Appearance|Customization Notifications|Customization Custom Buttons|Customization Smaller Buttons|Hotkeys|Hotkeys Basic|Hotkeys Advanced|Hotkeys Special"
 
 	guiXWorkArea := 150, guiYWorkArea := 10
 	Gui, Add, TreeView, x10 y10 h380 w130 -0x4 -Buttons gGui_Settings_TreeView
@@ -2219,6 +2231,7 @@ Gui_Settings() {
     P2C1 := TV_Add("Appearance", P2, "Expand")
     P2C2 := TV_Add("Custom Buttons", P2, "Expand")
     P2C3 := TV_Add("Smaller Buttons", P2, "Expand")
+    P2C4 := TV_Add("Notifications", P2, "Expand")
     P3 := TV_Add("Hotkeys","","Expand")
     P3C1 := TV_Add("Basic", P3, "Expand")
     P3C2 := TV_Add("Advanced", P3, "Expand")
@@ -2250,20 +2263,6 @@ Gui_Settings() {
 			Gui, Add, Slider, xp+10 yp+15 hwndShowTransparencyHandler gGui_Settings_Transparency vShowTransparency AltSubmit ToolTip Range0-100
 			Gui, Add, Text, xp-10 yp+30,Active (trades are on queue)
 			Gui, Add, Slider, xp+10 yp+15 hwndShowTransparencyActiveHandler gGui_Settings_Transparency vShowTransparencyActive AltSubmit ToolTip Range30-100
-
-; ;		Notifications
-;			 Trade Sound Group
-			Gui, Add, GroupBox,% "x" guiXWorkarea+215 . " y" guiYWorkArea+70 . " w205 h110" . " c000000",Notifications
-			Gui, Add, Checkbox, xp+10 yp+20 vNotifyTradeToggle hwndNotifyTradeToggleHandler,Trade
-			Gui, Add, Edit, xp+65 yp-2 w70 h17 vNotifyTradeSound hwndNotifyTradeSoundHandler ReadOnly
-			Gui, Add, Button, xp+75 yp-2 h20 vNotifyTradeBrowse gGui_Settings_Notifications_Browse,Browse
-;			Whisper Sound Group
-			Gui, Add, Checkbox,% "xp-140 yp+25" . " vNotifyWhisperToggle hwndNotifyWhisperToggleHandler",Whisper
-			Gui, Add, Edit, xp+65 yp-2 w70 h17 vNotifyWhisperSound hwndNotifyWhisperSoundHandler ReadOnly
-			Gui, Add, Button, xp+75 yp-2 h20 vNotifyWhisperBrowse gGui_Settings_Notifications_Browse,Browse
-;			Whisper Tray Notification
-			Gui, Add, Checkbox,% "xp-140"   " yp+29 vNotifyWhisperTray hwndNotifyWhisperTrayHandler",Show tray notifications
-			Gui, Add, Checkbox,% "xp"  " yp+14 vNotifyWhisperFlash hwndNotifyWhisperFlashHandler",Flash the taskbar icon
 ; ;		Support
 		Gui, Add, GroupBox,% "x" guiXWorkArea+10 " y" guiYWorkArea+240 . " w200 h85" . " c000000",Support
 		Gui, Add, Checkbox, xp+90 yp+20 vMessageSupportToggle hwndMessageSupportToggleHandler
@@ -2280,6 +2279,9 @@ Gui_Settings() {
 
 	Gui, Add, GroupBox, x%GuiXWorkArea% yp+40 w430 h55 c000000 Section Center,Smaller Buttons:
 		Gui, Add, Text,xp+10 yp+20 BackgroundTrans,Choose to bind the buttons to an hotkey.
+
+	Gui, Add, GroupBox, x%GuiXWorkArea% yp+40 w430 h55 c000000 Section Center,Notifications:
+		Gui, Add, Text,xp+10 yp+20 BackgroundTrans,Add or edit sounds and tab notifications.
 ;	--------------------
 	Gui, Tab, Customization Appearance
 	Gui, Add, GroupBox,% "x" guiXWorkarea . " y" guiYWorkArea-5 . " w430 h55" . " c000000",Preset
@@ -2453,6 +2455,55 @@ Gui_Settings() {
 		   	index := A_Index
 	}
 	key := "", element := "", hexCodes := "", xpos := "", ypos := "", handler := "", ConvertesChars := "", nString := ""
+;------------------------------
+;	Notifications
+	Gui, Tab, Customization Notifications
+
+	Gui, Add, GroupBox,% "x" GuiXWorkArea " y" GuiYWorkArea-5 " w430 h55" . " c000000 Section Center",About this tab:
+		Gui, Add, Text,xs+10 ys+15 BackgroundTrans,Change the notifications for whisper, trade, and user joined messages.
+		Gui, Add, Text,xp yp+15 BackgroundTrans,Customize tab title notifications for other messages and buyer joined
+
+		Gui, Add, GroupBox,% " x" guiXWorkArea . " ys+60" . " w430 h280" . " c000000"
+			; Sound Settings
+			Gui, Add, GroupBox,% "x" guiXWorkarea+5 . " y" guiYWorkArea+70 . " w205 h110" . " c000000",Sounds
+				; Trade Sound Group
+				Gui, Add, Checkbox, xp+10 yp+20 vNotifyTradeToggle hwndNotifyTradeToggleHandler,Trade
+				Gui, Add, Edit, xp+65 yp-2 w70 h17 vNotifyTradeSound hwndNotifyTradeSoundHandler ReadOnly
+				Gui, Add, Button, xp+75 yp-2 h20 vNotifyTradeBrowse gGui_Settings_Notifications_Browse,Browse
+				; Whisper Sound Group
+				Gui, Add, Checkbox,% "xp-140 yp+25" . " vNotifyWhisperToggle hwndNotifyWhisperToggleHandler",Whisper
+				Gui, Add, Edit, xp+65 yp-2 w70 h17 vNotifyWhisperSound hwndNotifyWhisperSoundHandler ReadOnly
+				Gui, Add, Button, xp+75 yp-2 h20 vNotifyWhisperBrowse gGui_Settings_Notifications_Browse,Browse
+				; Whisper Sound Group
+				Gui, Add, Checkbox,% "xp-140 yp+25" . " vNotifyJoinedToggle hwndNotifyJoinedToggleHandler",Joined
+				Gui, Add, Edit, xp+65 yp-2 w70 h17 vNotifyJoinedSound hwndNotifyJoinedSoundHandler ReadOnly
+				Gui, Add, Button, xp+75 yp-2 h20 vNotifyJoinedBrowse gGui_Settings_Notifications_Browse,Browse
+				; Other Sound Group
+				Gui, Add, Checkbox,% "xp-140 yp+25" . " vNotifyOtherToggle hwndNotifyOtherToggleHandler",Other
+				Gui, Add, Edit, xp+65 yp-2 w70 h17 vNotifyOtherSound hwndNotifyOtherSoundHandler ReadOnly
+				Gui, Add, Button, xp+75 yp-2 h20 vNotifyOtherBrowse gGui_Settings_Notifications_Browse,Browse
+
+
+
+			; Tabs Settings
+			Gui, Add, GroupBox,% " x" guiXWorkArea+215 . " y" guiYWorkArea+70 " w205 h110" . " c000000",Tabs
+				; Tab Settings Info
+				Gui, Add, Text,xp+10 yp+15 BackgroundTrans,Set a custom tab notification symbol
+				Gui, Add, Text,xp yp+15 BackgroundTrans,Input added after Tab ID by default
+				Gui, Add, Text,xp yp+15 BackgroundTrans,Adding `%id`% will output the Tab ID 
+				; Tab Joined Group
+				Gui, Add, Checkbox, xp yp+20 vTabJoinedToggle hwndTabJoinedToggleHandler,Joined
+				Gui, Add, Edit, xp+50 yp-2 w80 h17 vTabJoinedSymbol hwndTabJoinedSymbolHandler
+				Gui, Add, Text,xp+85 yp BackgroundTrans,Default: #
+				; Tab Other Group
+				Gui, Add, Checkbox,% "xp-135 yp+25" . " vTabOtherToggle hwndTabOtherToggleHandler",Other
+				Gui, Add, Edit, xp+50 yp-2 w80 h17 vTabOtherSymbol hwndTabOtherSymbolHandler
+				Gui, Add, Text,xp+85 yp BackgroundTrans,Default: @
+			; Misc Settings
+			Gui, Add, GroupBox,% "x" guiXWorkarea+5 . " y" guiYWorkArea+180 . " w415 h140" . " c000000",Misc
+				; Whisper Tray Notification
+				Gui, Add, Checkbox,% "xp+10"   " yp+20 vNotifyWhisperTray hwndNotifyWhisperTrayHandler",Show tray notifications
+				Gui, Add, Checkbox,% "xp"  " yp+14 vNotifyWhisperFlash hwndNotifyWhisperFlashHandler",Flash the taskbar icon
 
 ;------------------------------
 ;	Hotkeys Tab
@@ -2647,6 +2698,7 @@ return
 	  			:(evntinf=P2C1)?("Customization Appearance")
 	  			:(evntinf=P2C2)?("Customization Custom Buttons")
 	  			:(evntinf=P2C3)?("Customization Smaller Buttons")
+	  			:(evntinf=P2C4)?("Customization Notifications")
 	  			:(evntinf=P3)?("Hotkeys")
 	  			:(evntinf=P3C1)?("Hotkeys Basic")
 	  			:(evntinf=P3C2)?("Hotkeys Advanced")
@@ -2747,8 +2799,18 @@ return
 				GuiControl, Settings:,% NotifyWhisperSoundHandler,% soundFileName
 				whispersSoundFile := soundFile
 			}
+			if ( A_GuiControl = "NotifyJoinedBrowse" ) {
+				GuiControl, Settings:,% NotifyJoinedSoundHandler,% soundFileName
+				joinedSoundFile := soundFile
+			}
+			if ( A_GuiControl = "NotifyOtherBrowse" ) {
+				GuiControl, Settings:,% NotifyOtherSoundHandler,% soundFileName
+				otherSoundFile := soundFile
+			}
 		}
 	return
+
+
 	
 	Gui_Settings_Btn_Apply:
 		Gui, +OwnDialogs
@@ -2771,16 +2833,38 @@ return
 ;	Clipboard
 		IniWrite,% ClipTab,% iniFilePath,AUTO_CLIP,Clip_On_Tab_Switch
 ;	Notifications
-		IniWrite,% NotifyTradeToggle,% iniFilePath,NOTIFICATIONS,Trade_Toggle
-		IniWrite,% NotifyTradeSound,% iniFilePath,NOTIFICATIONS,Trade_Sound
-		if ( tradesSoundFile )
-			IniWrite,% tradesSoundFile,% iniFilePath,NOTIFICATIONS,Trade_Sound_Path
-		IniWrite,% NotifyWhisperToggle,% iniFilePath,NOTIFICATIONS,Whisper_Toggle
-		IniWrite,% NotifyWhisperSound,% iniFilePath,NOTIFICATIONS,Whisper_Sound
-		if ( whispersSoundFile )
-			IniWrite,% whispersSoundFile,% iniFilePath,NOTIFICATIONS,Whisper_Sound_Path
-		IniWrite,% NotifyWhisperTray,% iniFilePath,NOTIFICATIONS,Whisper_Tray
-		IniWrite,% NotifyWhisperFlash,% iniFilePath,NOTIFICATIONS,Whisper_Flash
+		; SOUNDS
+			; Trade Sound
+			IniWrite,% NotifyTradeToggle,% iniFilePath,NOTIFICATIONS,Trade_Toggle
+			IniWrite,% NotifyTradeSound,% iniFilePath,NOTIFICATIONS,Trade_Sound
+			if ( tradesSoundFile )
+				IniWrite,% tradesSoundFile,% iniFilePath,NOTIFICATIONS,Trade_Sound_Path
+			; Whisper Sound
+			IniWrite,% NotifyWhisperToggle,% iniFilePath,NOTIFICATIONS,Whisper_Toggle
+			IniWrite,% NotifyWhisperSound,% iniFilePath,NOTIFICATIONS,Whisper_Sound
+			if ( whispersSoundFile )
+				IniWrite,% whispersSoundFile,% iniFilePath,NOTIFICATIONS,Whisper_Sound_Path
+			; Joined Sound
+			IniWrite,% NotifyJoinedToggle,% iniFilePath,NOTIFICATIONS,Joined_Toggle
+			IniWrite,% NotifyJoinedSound,% iniFilePath,NOTIFICATIONS,Joined_Sound
+			if ( joinedSoundFile )
+				IniWrite,% joinedSoundFile,% iniFilePath,NOTIFICATIONS,Joined_Sound_Path
+			; Other Sound
+			IniWrite,% NotifyOtherToggle,% iniFilePath,NOTIFICATIONS,Other_Toggle
+			IniWrite,% NotifyOtherSound,% iniFilePath,NOTIFICATIONS,Other_Sound
+			if ( otherSoundFile )
+				IniWrite,% otherSoundFile,% iniFilePath,NOTIFICATIONS,Other_Sound_Path
+		; TABS
+			; Joined Tab
+			IniWrite,% TabJoinedToggle,% iniFilePath,NOTIFICATIONS,Tab_Joined_Toggle
+			IniWrite,% TabJoinedSymbol,% iniFilePath,NOTIFICATIONS,Tab_Joined_Symbol
+			; Other Tab
+			IniWrite,% TabOtherToggle,% iniFilePath,NOTIFICATIONS,Tab_Other_Toggle
+			IniWrite,% TabOtherSymbol,% iniFilePath,NOTIFICATIONS,Tab_Other_Symbol
+		; MISC
+			IniWrite,% NotifyWhisperTray,% iniFilePath,NOTIFICATIONS,Whisper_Tray
+			IniWrite,% NotifyWhisperFlash,% iniFilePath,NOTIFICATIONS,Whisper_Flash
+
 ;	Support Message
 		IniWrite,% MessageSupportToggle,% iniFilePath,SETTINGS,Support_Text_Toggle
 ;	Hotkeys
@@ -3133,13 +3217,13 @@ Gui_Settings_Get_Settings_Arrays() {
 	}
 
 	returnArray.NOTIFICATIONS_HandlersArray := Object()
-	returnArray.NOTIFICATIONS_HandlersArray.Insert(0, "NotifyTradeToggle", "NotifyTradeSound", "NotifyWhisperToggle", "NotifyWhisperSound", "NotifyWhisperTray", "NotifyWhisperFlash")
+	returnArray.NOTIFICATIONS_HandlersArray.Insert(0, "NotifyTradeToggle", "NotifyTradeSound", "NotifyWhisperToggle", "NotifyWhisperSound","NotifyJoinedToggle", "NotifyJoinedSound", "NotifyOtherToggle", "NotifyOtherSound", "TabJoinedToggle", "TabJoinedSymbol", "TabOtherToggle", "TabOtherSymbol", "NotifyWhisperTray", "NotifyWhisperFlash")
 	returnArray.NOTIFICATIONS_HandlersKeysArray := Object()
-	returnArray.NOTIFICATIONS_HandlersKeysArray.Insert(0, "Trade_Toggle", "Trade_Sound", "Whisper_Toggle", "Whisper_Sound", "Whisper_Tray", "Whisper_Flash")
+	returnArray.NOTIFICATIONS_HandlersKeysArray.Insert(0, "Trade_Toggle", "Trade_Sound", "Whisper_Toggle", "Whisper_Sound", "Joined_Toggle", "Joined_Sound", "Other_Toggle", "Other_Sound", "Tab_Joined_Toggle", "Tab_Joined_Symbol","Tab_Other_Toggle", "Tab_Other_Symbol", "Whisper_Tray", "Whisper_Flash")
 	returnArray.NOTIFICATIONS_KeysArray := Object()
-	returnArray.NOTIFICATIONS_KeysArray.Insert(0, "Trade_Toggle", "Trade_Sound", "Trade_Sound_Path", "Whisper_Toggle", "Whisper_Sound", "Whisper_Sound_Path", "Whisper_Tray", "Whisper_Flash")
+	returnArray.NOTIFICATIONS_KeysArray.Insert(0, "Trade_Toggle", "Trade_Sound", "Trade_Sound_Path", "Whisper_Toggle", "Whisper_Sound", "Whisper_Sound_Path", "Joined_Toggle", "Joined_Sound", "Joined_Sound_Path", "Other_Toggle", "Other_Sound", "Other_Sound_Path", "Tab_Joined_Toggle", "Tab_Joined_Symbol","Tab_Other_Toggle", "Tab_Other_Symbol", "Whisper_Tray", "Whisper_Flash")
 	returnArray.NOTIFICATIONS_DefaultValues := Object()
-	returnArray.NOTIFICATIONS_DefaultValues.Insert(0, "1", "WW_MainMenu_Letter.wav", programSFXFolderPath "\WW_MainMenu_Letter.wav", "0", "None", "", "1", "0")
+	returnArray.NOTIFICATIONS_DefaultValues.Insert(0, "1", "WW_MainMenu_Letter.wav", programSFXFolderPath "\WW_MainMenu_Letter.wav", "0", "None", "", "1", "WW_Get_Item.wav", programSFXFolderPath "\WW_Get_Item.wav", "0", "None", "", "1", "#", "1", "@", "1", "0")
 
 	returnArray.HOTKEYS_ADVANCED_HandlersArray := Object()
 	returnArray.HOTKEYS_ADVANCED_HandlersKeysArray := Object()
@@ -3369,7 +3453,12 @@ Get_Control_ToolTip(controlName) {
 	NotifyWhisperBrowse_TT := NotifyWhisperSound_TT := NotifyWhisperToggle_TT := "Play a sound when you receive a regular whisper"
 	. "`nTick the case to enable."
 	. "`nClick on [Browse] to select a sound file."
-	
+
+	TabJoinedToggle_TT := TabJoinedSymbol_TT := TabOtherToggle_TT := TabOtherSymbol_TT := "Add a notification to tab when buyer joins or whispers"
+	. "`nInput is added after the Tab ID by default"
+	. "`nYou can use %id% to position the Tab ID, e.g. @ %id% @ "
+	. "`nTick the case to enable."
+
 	NotifyWhisperTray_TT := "Show a tray notification when you receive"
 	. "`na whisper while the game window is not active."
 
@@ -5381,6 +5470,8 @@ Extract_Sound_Files() {
 	FileInstall, Resources\SFX\MM_Tatl_Hey.wav,% sfxFolder "\MM_Tatl_Hey.wav", 0
 	FileInstall, Resources\SFX\WW_MainMenu_CopyErase_Start.wav,% sfxFolder "\WW_MainMenu_CopyErase_Start.wav", 0
 	FileInstall, Resources\SFX\WW_MainMenu_Letter.wav,% sfxFolder "\WW_MainMenu_Letter.wav", 0
+	FileInstall, Resources\SFX\WW_Get_Rupee.wav,% sfxFolder "\WW_Get_Rupee.wav", 0
+	FileInstall, Resources\SFX\WW_Get_Item.wav,% sfxFolder "\WW_Get_Item.wav", 0
 }
 
 Extract_Data_Files() {
@@ -6160,17 +6251,26 @@ Has_Val(object, value) {
 }
 
 Get_Tab_Title(tabId) {
+	global ProgramSettings
 	tabInfos := Gui_Trades_Get_Trades_Infos(tabId)
-	if (tabInfos.InArea = 1) {
-		title := tabId " #"
-	} else if (tabInfos.Other != "-" && tabInfos.Other != "'n" && tabInfos.Other != "") {
-		title := tabId " @"
+	if (tabInfos.InArea = 1 && ProgramSettings.Tab_Joined_Toggle = 1) {
+		joinedSymbol := ProgramSettings.Tab_Joined_Symbol
+		if (InStr(joinedSymbol, "%id%")) {
+			return StrReplace(joinedSymbol, "%id%", tabId)
+		} else {
+			return tabID " " joinedSymbol
+		}
+	} else if (tabInfos.Other != "-" && tabInfos.Other != "'n" && tabInfos.Other != "" && ProgramSettings.Tab_Other_Toggle = 1) {
+		otherSymbol := ProgramSettings.Tab_Other_Symbol
+		if (InStr(otherSymbol, "%id%")) {
+			 return StrReplace(otherSymbol, "%id%", tabId)
+		} else {
+			return tabID " " otherSymbol
+		}
 	} else {
-		title := tabId
+		return tabId
 	}
-	return title
 }
-
 
 #Include %A_ScriptDir%/Resources/AHK/
 #Include BinaryEncodingDecoding.ahk
