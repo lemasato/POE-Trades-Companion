@@ -6494,6 +6494,9 @@ Gui_Trades_Skinned_Update_Tab_Titles() {
 	maxTabsRow := TradesGUI_Values.Max_Tabs_Per_Row
 	tabsCount := TradesGUI_Values.Tabs_Count
 	tabsRange := Gui_TradeS_Skinned_Get_Tabs_Images_Range()
+
+	if ( tabsCount >= tabsRange.Last_Tab ) {
+
 		index := maxTabsRow
 		Loop %maxTabsRow% {
 			index := A_Index
@@ -6505,6 +6508,7 @@ Gui_Trades_Skinned_Update_Tab_Titles() {
 			GuiControl,Trades:,% TradesGUI_Controls["Tab_NUM_" index],% tabIndex
 		}
 		Gui_Trades_Skinned_Set_Tab_Images_State()
+	}
 }
 if (programValues["Debug"]) {
 	Pause::Pause
