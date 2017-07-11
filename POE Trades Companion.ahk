@@ -53,6 +53,8 @@ Start_Script() {
 	global Stats_TradeCurrencyNames 	:= Object() ; Abridged currency names from poe.trade
 	global Stats_RealCurrencyNames 		:= Object() ; All currency full names
 
+	global Trading_Leagues 				:= Get_Active_Trading_Leagues()
+
 ;	- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	
 	ProgramSettings.Screen_DPI 			:= Get_DPI_Factor() 
@@ -106,11 +108,15 @@ Start_Script() {
 
 	ProgramValues.PID 					:= DllCall("GetCurrentProcessId")
 
-	ProgramValues.Debug := (A_IsCompiled)?(0):(ProgramValues.Debug) ; Prevent from enabling debug on compiled executable
 	if FileExist(A_ScriptDir "/ENABLE_DEBUG.txt") {
 		FileRead, fileContent,% A_ScriptDir "/ENABLE_DEBUG.txt"
-		fileContent := StrReplace(fileContent, "`n", "")
-		ProgramValues.Debug := fileContent
+		; Begin ./ENABLED_DEBUG.txt with debug:true and add log strings beginning next line like normal
+		debugRegex := "(?:^debug:)(true|false)([\s\S]*)"
+		if (RegExMatch(fileContent, debugRegex, debugPat)) {
+			ProgramValues.Debug := (debugPat1 = "true") ? 1 : 0
+			ProgramValues.DebugTxt := debugPat2
+		}
+		ProgramValues.Debug := (A_IsCompiled)?(0):(ProgramValues.Debug) ; Prevent from enabling debug on compiled executable
 	}
 ;	- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -180,22 +186,7 @@ Start_Script() {
 	Create_Tray_Menu()
 
 	if ( ProgramValues["Debug"] ) {
-		; trade / No qual / Level
-		str := "2016/10/09 21:30:32 105384166 355 [INFO Client 6416] "
-			str .= "@From iSellStuff: Hi, I would like to buy your level 1 0% Faster Attacks Support listed for 5 alteration in Legacy (stash tab """"Shop: Gems""""; position: left 10, top 11) Offering 1alch?"
-
-		; trade / No qual / Level / Unpriced
-		str .= "`n" "2016/10/09 21:30:32 105384166 355 [INFO Client 6416] "
-			str .= "@From 22: Hi, I would like to buy your level 19 0% Faster Attacks Support in Beta Standard (stash tab """"Shop: poetrade 1""""; position: left 20, top 11)"
-
-		; app / No qual / Level
-		str .= "`n" "2016/10/09 21:30:32 105384166 355 [INFO Client 6416] "
-			str .= " @From 33: wtb Faster Attacks Support (21/20%) listed for 1 Orb of Alteration in standard (stash """"Shop: poeapp 1""""; left 30, top 21)"
-
-		; app / No qual / Level / Unpriced
-		str .= "`n" "2016/10/09 21:30:32 105384166 355 [INFO Client 6416] "
-			str .= " @From 44: wtb Faster Attacks Support (21/20%) in standard (stash """"Shop: poeapp 1""""; left 40, top 21)"
-		Filter_Logs_Message(str)
+		Filter_Logs_Message(ProgramValues.DebugTxt)
 	}
 
 	Gui_Trades_Load_Pending_Backup()
@@ -213,11 +204,56 @@ Start_Script() {
 ;
 ;==================================================================================================================
 
+Get_Active_Trading_Leagues() {
+/*		Retrieves leagues from the API
+		Parse them, to keep only non-solo or non-ssf leagues
+		Return the resulting list
+*/
+	apiLink := "http://api.pathofexile.com/leagues?offset=XX&compact=1"
+	excludedWords := "SSF,Solo"
+	activeLeagues := "Standard|Hardcore|Beta Standard|Beta Hardcore"
+	offsetCount := 6000 ; Legacy starts at 6000
+
+	Loop {
+		apiLinkOffset := RegExReplace(apiLink, "XX", offsetCount)
+
+		whr := ComObjCreate("WinHttp.WinHttpRequest.5.1")
+		whr.Open("GET", apiLinkOffset, true) ; Using true above and WaitForResponse allows the script to r'emain responsive.
+		whr.Send()
+		whr.WaitForResponse(10) ; 10 seconds
+		leaguesJSON := whr.ResponseText
+		parsedLeagues := JSON.Load(leaguesJSON)
+		Loop % parsedLeagues.MaxIndex() {
+			arrID := parsedLeagues[A_Index]
+			leagueEnd := RegExMatch(arrID.endAt, "(.*)-(.*)-(.*)T(.*):(.*):(.*)Z", pat)
+			leagueEndTime := pat1 . pat2 . pat3 . pat4 . pat5 . pat6
+
+			if ( arrID.startAt && (leagueEndTime > A_Now || !leagueEndTime) ) {
+				activeLeagues .= "|" arrID.ID
+			}
+		}
+		offsetCount += parsedLeagues.MaxIndex()
+		if !(parsedLeagues.MaxIndex())
+			Break
+	}
+
+	tradingLeagues := []
+	Loop, Parse, activeLeagues,% "D|" 
+	{
+		if A_LoopField not contains %excludedWords%
+		{
+			tradingLeagues.Push(A_LoopField)
+		}
+	}
+
+	return tradingLeagues
+}
+
 Filter_Logs_Message(message) {
 /*		Filter the logs message to retrieve the required informations we need
 			and send them to the Trades GUI if it is a trade whisper.
  */
-	global ProgramSettings, TradesGUI_Values
+	global ProgramSettings, TradesGUI_Values, Trading_Leagues, ProgramValues
 
 	Loop, Parse, message, `n ; For each new individual line since last check
 	{
@@ -230,28 +266,6 @@ Filter_Logs_Message(message) {
 			whispName := whispNameFull.Name, whispGuild := whispNameFull.Guild
 			TradesGUI_Values.Last_Whisper := whispName
 
-			; Check existing tabs for same buyer, and add to the "Other:" slot
-			tradesInfos := Gui_Trades_Manage_Trades("GET_ALL")
-			Loop % tradesInfos.Max_Index {
-				if (whispName = tradesInfos[A_Index "_Buyer"]) {
-					otherContent := tradesInfos[A_Index "_Other"]
-					if (otherContent != "-" && otherContent != "`n") { ; Already contains text, include previous text
-						if otherContent not contains (Hover to see all messages) ; Only one message in the Other slot.
-						{
-							StringReplace, otherContent, otherContent,% "`n",% "",1 ; Remove blank lines
-							otherContent := "[" tradesInfos[A_Index "_Time"] "] " otherContent ; Add timestamp
-						}
-						StringReplace, otherContent, otherContent,% "(Hover to see all messages)`n",% "",1
-						otherText := "(Hover to see all messages)`n" otherContent "`n[" A_Hour ":" A_Min "] " whispMsg
-					}
-					else { ; Does not contains text, do not include previous text
-						otherText := "(Hover to see all messages)`n" "[" A_Hour ":" A_Min "] " whispMsg
-					}
-					setInfos := { OTHER:otherText, TabID:A_Index }
-					Gui_Trades_Set_Trades_Infos(setInfos)
-				}
-			}
-
 			if !WinActive("ahk_pid " gamePID) {
 				if ( ProgramSettings.Whisper_Tray ) {
 					Show_Tray_Notification("Whisper from " whispName, whispMsg)
@@ -263,59 +277,232 @@ Filter_Logs_Message(message) {
 				}
 			}
 
-			; poeappRegExStr := "(.*)wtb (.*) listed for (.*) in (?:(.*)\(stash ""(.*)""; left (.*), top (.*)\)|Hardcore (.*?)\W|(.*?)\W)(.*)"
-			; poetradeRegExStr := "(.*)Hi, I(?: would|'d) like to buy your (?:(.*) |(.*))(?:listed for (.*)|for my (.*)|)(?!:listed for|for my) in (?:(.*)\(stash tab ""(.*)""; position: left (.*), top (.*)\)|Hardcore (.*?)\W|(.*?)\W)(.*)"
-
 			whisp := whispName ": " whispMsg "`n"
-			poeappRegExStr := "(.*)wtb (.*) listed for (.*) in (?:(.*)\(stash ""(.*)""; left (.*), top (.*)\)|Hardcore (.*?)\W|(.*?)\W)(.*)" ; poeapp
-			poetradeRegExStr := "(.*)Hi, I(?: would|'d) like to buy your (?:(.*) |(.*))(?:listed for (.*)|for my (.*)|) in (?:(.*)\(stash tab ""(.*)""; position: left (.*), top (.*)\)|Hardcore (.*?)\W|(.*?)\W)(.*)" ; poe.trade
-			allRegExStr := {poeapp:poeappRegExStr, poetrade:poetradeRegExStr}
+			; poeappRegExStr 				:= "(.*)wtb (.*) listed for (.*) in (?:(.*)\(stash ""(.*)""; left (.*), top (.*)\)|Hardcore (.*?)\W|(.*?)\W)(.*)" ; poeapp
+			; poetradeRegExStr 			:= "(.*)Hi, I(?: would|'d) like to buy your (?:(.*) |(.*))(?:listed for (.*)|for my (.*)|) in (?:(.*)\(stash tab ""(.*)""; position: left (.*), top (.*)\)|Hardcore (.*?)\W|(.*?)\W)(.*)" ; poe.trade
+
+			poeTradeRegexStr 			:= "(.*)Hi, I would like to buy your (.*) listed for (.*) in (.*)" ; 1: Other, 2: Item, 3: Price, 4: League + Tab + Other
+			poeTradeUnpricedRegexStr 	:= "(.*)Hi, I would like to buy your (.*) in (.*)" ; 1: Other, 2: Item, 3: League + Tab + Other
+			poeTradeCurrencyRegexStr	:= "(.*)Hi, I'd like to buy your (.*) for my (.*) in (.*)" ; 1: Other, 2: Currency, 3: Price, 4: League + Tab + Other
+			poeTradeStashRegexStr 		:= "\(stash tab ""(.*)""; position: left (.*), top (.*)\)(.*)" ; 1: Tab, 2: Left, 3: Top, 4: Other
+			poTradeQualityRegExStr 		:= "level (.*) (.*)% (.*)" ; 1: Item level, 2: Item quality, 3: Item name
+
+			poeAppRegExStr 				:= "(.*)wtb (.*) listed for (.*) in (.*)" ; 1: Other, 2: Item, 3: Price, 4: League + Tab + Other
+			poeAppUnpricedRegexStr 		:= "(.*)wtb (.*) in (.*)" ; 1: Other, 2: Item, 3: League + Tab + Other
+			poeAppStashRegexStr 		:= "\(stash ""(.*); left (.*), top(.*)\)(.*)" ; 1: Tab, 2: Left, 3: Top, 4: Other
+			poeAppQualityRegExStr 		:= "(.*) \((.*)/(.*)%\)" ; 1: Item name, 2: Item level, 3: Item quality
+
+			allRegexStr := {"poeTradeRegexStr":poeTradeRegexStr
+						   ,"poeTradeUnpricedRegexStr":poeTradeUnpricedRegexStr
+						   ,"poeTradeCurrencyRegexStr":poeTradeCurrencyRegexStr
+						   ,"poeAppRegExStr":poeAppRegExStr
+						   ,"poeAppUnpricedRegexStr":poeAppUnpricedRegexStr}
 			for regExName, regExStr in allRegExStr {
 				if RegExMatch(whisp, "i).*: " regExStr) {
 					Break
 				}
 			}
-			if RegExMatch(whisp, "i).*: " regExStr, subPat ) ; Matching pattern found
+			if RegExMatch(whisp, "i).*: " regExStr, whispPat ) ; Matching pattern found
 			{
 				timeSinceLastTrade := 0
 
-				if ( regExName = "poetrade" ) {
-					tradeItem := (subPat2)?(subPat2):(subPat3)?(subPat3):("ERROR RETRIEVING ITEM")
-					if RegExMatch(tradeItem, "level (.*) (.*)% (.*)", itemPat) {
-						tradeItem := itemPat3 " (Lvl:" itemPat1 " / Qual:" itemPat2 "%)"
-						itemPat1 := "", itemPat2 := "", itemPat3 := ""
-					}
-					tradePrice := (subPat4)?(subPat4):(subPat5)?(subPat5):("Unpriced Item (See Offer)")
-					tradeStash := (subPat6)?(subPat6 " (Tab:" subPat7 " / Pos:" subPat8 ";" subPat9 ")"):(subPat10)?("Hardcore " subPat10):(subPat11)?(subPat11):("ERROR RETRIEVING LOCATION")
-					tradeOther := (subPat11!=subPat6 && subPat11!=subPat10 && subPat11!=tradeStash)?(subPat1 subPat11):(subPat12 && subPat12!="`n")?(subPat12):("-")
+				if ( regExName = "poeTradeRegexStr" ) {
+					whispOther 			:= whispPat1
+					whispItem 			:= whispPat2
+					whispPrice 			:= whispPat3
+					endOfWhisper 		:= whispPat4
+					whispPat1 := "", whispPat2 := "", whispPat3 := "", whispPat4 := ""
 
-					tradeItem = %tradeItem% ; Remove blank spaces
-					tradePrice = %tradePrice%
-					tradeStash = %tradeStash%
-					tradeOther = %tradeOther%
-				}
-				else if ( regExName = "poeapp" ) {
-					tradeItem := subPat2
-					if RegExMatch(tradeItem, "(.*) \((.*)/(.*)%\)", itemPat) {
-						tradeItem := itemPat1 " (Lvl:" itemPat2 " / Qual:" itemPat3 "%)"
-						itemPat1 := "", itemPat2 := "", itemPat3 := ""
+					for id, leagueName in Trading_Leagues {
+						if RegExMatch(endOfWhisper, leagueName "(.*)", endOfWhisperPat) {
+							whispLeague 		:= leagueName
+							endOfWhisper 		:= endOfWhisperPat1
+							endOfWhisperPat1 	:= ""
+							Break
+						}
 					}
-					tradePrice := (subPat3)?(subPat3):("Unpriced Item (See Offer)")
-					tradeStash := (subPat4)?(subPat4 " (Tab:" subpat5 " / Pos:" subPat6 ";" subPat7 ")"):(subPat8)?("Hardcore " subPat8):(subPat9)?(subPat9):("ERROR RETRIEVING LOCATION")								
-					tradeOther := (subPat1 || subPat10 && subPat10 != "`n")?(subPat1 . subPat10):("-")
+					if RegExMatch(endOfWhisper, poeTradeStashRegexStr, stashPat) {
+						whispStash 		:= stashPat1
+						whispStashLeft 	:= stashPat2
+						whispStashTop 	:= stashPat3
+						whispOther2 	:= stashPat4
+						stashPat1 := "", stashPat2 := "", stashPat3 := "", stashPat4 := ""
+					}
+					else {
+						whispOther2 	:= endOfWhisper
+					}
+					if RegExMatch(whispItem, poTradeQualityRegExStr, itemQualPat) {
+						whispItemLevel 	:= itemQualPat1
+						whispItemQual 	:= itemQualPat2
+						whispItemName 	:= itemQualPat3
+						itemQualPat1 := "", itemQualPat2 := "", itemQualPat3 := ""
+					}
 
-					tradeItem = %tradeItem% ; Remove blank spaces
-					tradePrice = %tradePrice%
-					tradeStash = %tradeStash%
-					tradeOther = %tradeOther%
+					newTradeItem 		:= (whispItemName)?(whispItemName " Lvl:" whispItemLevel " / Qual:" whispItemQual "%"):(whispItem)
+					newTradePrice 		:= whispPrice
+					newTradeLocation 	:= (whispStash)?(whispLeague " (Tab:" whispStash " / Pos:" whispStashLeft ";" whispStashTop ")"):(whispLeague)
+					newTradeOther 		:= (whispOther && whispOther2)?(whispOther " " whispOther2):(whispOther . whispOther2)
 				}
+				else if ( regExName = "poeTradeUnpricedRegexStr") {
+					whispOther 			:= whispPat1
+					whispItem 			:= whispPat2
+					endOfWhisper 		:= whispPat3
+					whispPat1 := "", whispPat2 := "", whispPat3 := ""
+
+					for id, leagueName in Trading_Leagues {
+						if RegExMatch(endOfWhisper, leagueName "(.*)", endOfWhisperPat) {
+							whispLeague 		:= leagueName
+							endOfWhisper 		:= endOfWhisperPat1
+							endOfWhisperPat1	:= ""
+							Break
+						}
+					}
+
+					if RegExMatch(endOfWhisper, poeTradeStashRegexStr, stashPat) {
+						whispStash 		:= stashPat1
+						whispStashLeft 	:= stashPat2
+						whispStashTop 	:= stashPat3
+						whispOther2 	:= stashPat4
+						stashPat1 := "", stashPat2 := "", stashPat3 := "", stashPat4 := ""
+					}
+					else {
+						whispOther2 	:= endOfWhisper
+					}
+
+					if RegExMatch(whispItem, poTradeQualityRegExStr, itemQualPat) {
+						whispItemLevel 	:= itemQualPat1
+						whispItemQual 	:= itemQualPat2
+						whispItemName 	:= itemQualPat3
+						itemQualPat1 := "", itemQualPat2 := "", itemQualPat3 := ""
+					}
+
+					newTradeItem 		:= (whispItemName)?(whispItemName " (Lvl:" whispItemLevel " / Qual:" whispItemQual "%)"):(whispItem)
+					newTradePrice 		:= "Unpriced Item (See Offer)"
+					newTradeLocation 	:= (whispStash)?(whispLeague " (Tab:" whispStash " / Pos:" whispStashLeft ";" whispStashTop ")"):(whispLeague)
+					newTradeOther 		:= (whispOther && whispOther2)?(whispOther " " whispOther2):(whispOther . whispOther2)
+				}
+				else if ( regExName = "poeTradeCurrencyRegexStr" ) {
+					whispOther 			:= whispPat1
+					whispItem 			:= whispPat2
+					whispPrice 			:= whispPat3
+					endOfWhisper 		:= whispPat4
+					whispPat1 := "", whispPat2 := "", whispPat3 := "", whispPat4 := ""
+
+					for id, leagueName in Trading_Leagues {
+						if RegExMatch(endOfWhisper, leagueName "(.*)", endOfWhisperPat) {
+							whispLeague 		:= leagueName
+							endOfWhisper 		:= endOfWhisperPat1
+							endOfWhisperPat1 	:= ""
+							Break
+						}
+					}
+
+					if RegExMatch(endOfWhisper, poeTradeStashRegexStr, stashPat) {
+						whispStash 		:= stashPat1
+						whispStashLeft 	:= stashPat2
+						whispStashTop 	:= stashPat3
+						whispOther2 	:= stashPat4
+						stashPat1 := "", stashPat2 := "", stashPat3 := "", stashPat4 := ""
+					}
+					else {
+						whispOther2 	:= endOfWhisper
+					}
+
+					newTradeItem 		:= whispItem
+					newTradePrice 		:= whispPrice
+					newTradeLocation 	:= whispLeague
+					newTradeOther 		:= (whispOther && whispOther2)?(whispOther " " whispOther2):(whispOther . whispOther2)
+				}
+				else if ( regExName = "poeAppRegExStr" ) {
+					whispOther 			:= whispPat1
+					whispItem 			:= whispPat2
+					whispPrice 			:= whispPat3
+					endOfWhisper 		:= whispPat4
+					whispPat1 := "", whispPat2 := "", whispPat3 := "", whispPat4 := ""
+
+					for id, leagueName in Trading_Leagues {
+						if RegExMatch(endOfWhisper, leagueName "(.*)", endOfWhisperPat) {
+							whispLeague 		:= leagueName
+							endOfWhisper 		:= endOfWhisperPat1
+							endOfWhisperPat1 	:= ""
+							Break
+						}
+					}
+
+					if RegExMatch(endOfWhisper, poeAppStashRegexStr, stashPat) {
+						whispStash 		:= stashPat1
+						whispStashLeft 	:= stashPat2
+						whispStashTop 	:= stashPat3
+						whispOther2 	:= stashPat4
+						stashPat1 := "", stashPat2 := "", stashPat3 := "", stashPat4 := ""
+					}
+					else {
+						whispOther2 	:= endOfWhisper
+					}
+
+					if RegExMatch(whispItem, poeAppQualityRegExStr, itemQualPat) {
+						whispItemName 	:= itemQualPat1
+						whispItemLevel 	:= itemQualPat2
+						whispItemQual 	:= itemQualPat3
+						itemQualPat1 := "", itemQualPat2 := "", itemQualPat3 := ""
+					}
+
+					newTradeItem 		:= (whispItemName)?(whispItemName " (Lvl:" whispItemLevel " / Qual:" whispItemQual "%)"):(whispItem)
+					newTradePrice 		:= whispPrice
+					newTradeLocation 	:= (whispStash)?(whispLeague " (Tab:" whispStash " / Pos:" whispStashLeft ";" whispStashTop ")"):(whispLeague)
+					newTradeOther 		:= (whispOther && whispOther2)?(whispOther " " whispOther2):(whispOther . whispOther2)
+				}
+				else if ( regExName = "poeAppUnpricedRegexStr") {
+					whispOther 			:= whispPat1
+					whispItem 			:= whispPat2
+					endOfWhisper 		:= whispPat3
+					whispPat1 := "", whispPat2 := "", whispPat3 := ""
+
+					for id, leagueName in Trading_Leagues {
+						if RegExMatch(endOfWhisper, leagueName "(.*)", endOfWhisperPat) {
+							whispLeague 		:= leagueName
+							endOfWhisper 		:= endOfWhisperPat1
+							endOfWhisperPat1 	:= ""
+							Break
+						}
+					}
+
+					if RegExMatch(endOfWhisper, poeAppStashRegexStr, stashPat) {
+						whispStash 		:= stashPat1
+						whispStashLeft 	:= stashPat2
+						whispStashTop 	:= stashPat3
+						whispOther2 	:= stashPat4
+						stashPat1 := "", stashPat2 := "", stashPat3 := "", stashPat4 := ""
+					}
+					else {
+						whispOther2 	:= endOfWhisper
+					}
+
+					if RegExMatch(whispItem, poeAppQualityRegExStr, itemQualPat) {
+						whispItemName 	:= itemQualPat1
+						whispItemLevel 	:= itemQualPat2
+						whispItemQual 	:= itemQualPat3
+						itemQualPat1 := "", itemQualPat2 := "", itemQualPat3 := ""
+					}
+
+					newTradeItem 		:= (whispItemName)?(whispItemName " (Lvl:" whispItemLevel " / Qual:" whispItemQual "%)"):(whispItem)
+					newTradePrice 		:= "Unpriced Item (See Offer)"
+					newTradeLocation 	:= (whispStash)?(whispLeague " (Tab:" whispStash " / Pos:" whispStashLeft ";" whispStashTop ")"):(whispLeague)
+					newTradeOther 		:= (whispOther && whispOther2)?(whispOther " " whispOther2):(whispOther . whispOther2)
+				}
+
+				newTradeItem 		= %newTradeItem%
+				newTradePrice 		= %newTradePrice%
+				newTradeLocation 	= %newTradeLocation%
+				newTradeOther 		= %newTradeOther%
+				newTradeOther 		:= ( newTradeOther && (newTradeOther = "." || newTradeOther = "`n" || newTradeOther = " ") )?("-"):(!newTradeOther)?("-"):(newTradeOther)
 
 				; Do not add the trade if the same is already in queue
 				tradesExists := 0
 				tradesInfos := Gui_Trades_Manage_Trades("GET_ALL")
 				Loop % tradesInfos.Max_Index {
 					buyerContent := tradesInfos[A_Index "_Buyer"], itemContent := tradesInfos[A_Index "_Item"], priceContent := tradesInfos[A_Index "_Price"], locationContent := tradesInfos[A_Index "_Location"], otherContent = tradesInfos[A_Index "_Other"]
-					if (buyerContent=whispName && itemContent=tradeItem && priceContent=tradePrice && locationContent=tradeStash) {
+					if (buyerContent=whispName && itemContent=newTradeItem && priceContent=newTradePrice && locationContent=newTradeLocation) {
 						tradesExists := 1
 					}
 				}
@@ -323,14 +510,15 @@ Filter_Logs_Message(message) {
 				; Trade does not already exist
 				if (tradesExists = 0) {
 					newTradesInfos := {Buyer:whispName
-									  ,Item:tradeItem
-									  ,Price:tradePrice
-									  ,Location:tradeStash
+									  ,Item:newTradeItem
+									  ,Price:newTradePrice
+									  ,Location:newTradeLocation
 									  ,PID:gamePID
 									  ,Time:A_Hour ":" A_Min
-									  ,Other:tradeOther
+									  ,Other:newTradeOther
 									  ,Date:A_YYYY "-" A_MM "-" A_DD
-									  ,Guild:whispGuild}
+									  ,Guild:whispGuild
+									  ,InArea:0}
 					messagesArray := Gui_Trades_Manage_Trades("ADD_NEW", newTradesInfos)
 					Gui_Trades("UPDATE", messagesArray)
 
@@ -341,13 +529,83 @@ Filter_Logs_Message(message) {
 						SoundPlay,% ProgramSettings.Whisper_Sound_Path
 					}
 				}
+				whispName := "", whispGuild := "", newTradeItem := "", newTradePrice := "", newTradeLocation := "", newTradeOther := "", gamePID := ""
 			}
 			else {
-				if ( ProgramSettings.Whisper_Toggle = 1 ) && FileExist(ProgramSettings.Whisper_Sound_Path) { ; Play the sound set for whispers
+				; Only add other text if it's not a trade
+				; Check existing tabs for same buyer, and add to the "Other:" slot
+				tradesInfos := Gui_Trades_Manage_Trades("GET_ALL")
+				Loop % tradesInfos.Max_Index {
+					if (whispName = tradesInfos[A_Index "_Buyer"]) {
+						otherContent := tradesInfos[A_Index "_Other"]
+						if (otherContent != "-" && otherContent != "`n") { ; Already contains text, include previous text
+							if otherContent not contains (Hover to see all messages) ; Only one message in the Other slot.
+							{
+								StringReplace, otherContent, otherContent,% "`n",% "",1 ; Remove blank lines
+								otherContent := "[" tradesInfos[A_Index "_Time"] "] " otherContent ; Add timestamp
+							}
+							StringReplace, otherContent, otherContent,% "(Hover to see all messages)`n",% "",1
+							otherText := "(Hover to see all messages)`n" otherContent "`n[" A_Hour ":" A_Min "] " whispMsg
+						}
+						else { ; Does not contains text, do not include previous text
+							otherText := "(Hover to see all messages)`n" "[" A_Hour ":" A_Min "] " whispMsg
+						}
+						setInfos := { OTHER:otherText, TabID:A_Index }
+						Gui_Trades_Set_Trades_Infos(setInfos)
+
+						tradesInfos := Gui_Trades_Manage_Trades("GET_ALL")
+						Gui_Trades("UPDATE", tradesInfos)	
+					}
+				}
+				if ( ProgramSettings.Other_Toggle = 1 ) && FileExist(ProgramSettings.Other_Sound_Path) { ; Play the sound set for other text
+					SoundPlay,% ProgramSettings.Other_Sound_Path
+				} else if ( ProgramSettings.Whisper_Toggle = 1 ) && FileExist(ProgramSettings.Whisper_Sound_Path) { ; Play the sound set for whispers
 					SoundPlay,% ProgramSettings.Whisper_Sound_Path
 				}
 			}
 		}
+
+		; Check if a buyer has joined or left the area 
+		areaRegexStr := (ProgramValues.debug) ;debug regex
+			? ("^(?:[^ ]+ ){6}(\d+)\](?:.*) : (.*?) (?:has) (joined|left) (?:the area.*)") ; matches ' : {name} has {joined|left} ..' from chat as well 
+			: ("^(?:[^ ]+ ){6}(\d+)\] : (.*?) (?:has) (joined|left) (?:the area.*)") 
+
+		if ( RegExMatch( A_LoopField, areaRegexStr, subPat ) ) {
+			gamePID := subPat1, whispName := subPat2, areaStatus := subPat3
+			TradesGUI_Values.Last_Whisper := whispName
+
+			; Check if player has pending trade
+			tradesInfos := Gui_Trades_Manage_Trades("GET_ALL")
+			updateCount := 0
+			Loop % tradesInfos.Max_Index {
+				if (whispName = tradesInfos[A_Index "_Buyer"]) {
+					; Check if the player is already in the area
+					if ( areaStatus = "joined" && !tradesInfos[A_Index "_InArea"]) {
+						Set_Buyer_Area_Status(A_Index, 1)
+						updateCount ++
+						; Play sound and alert
+						if ( ProgramSettings.Joined_Toggle = 1 ) && FileExist(ProgramSettings.Joined_Sound_Path) { 
+							SoundPlay,% ProgramSettings.Joined_Sound_Path
+						}
+						if !WinActive("ahk_pid " gamePID) {
+							if ( ProgramSettings.Whisper_Flash ) {
+							gameHwnd := WinExist("ahk_pid " gamePID)
+							DllCall("FlashWindow", UInt, gameHwnd, Int, 1)
+							}
+						}
+					} else if (areaStatus = "left" && tradesInfos[A_Index "_InArea"] = 1) {
+						Set_Buyer_Area_Status(A_Index, 0)
+						updateCount++
+					}
+				}
+			}
+			if ( updateCount > 0 ) {
+				GUI_Update_Tabs_Titles()
+			}
+
+
+		}
+		; End of area joined
 	}
 }
 
@@ -526,7 +784,7 @@ Gui_Trades(mode="", tradeInfos="") {
 			TradesGUI_Controls.Insert("Border_Bottom", guiTradesBorderBottom)
 
 			Gui, Add, Text,% "x" borderSize . " y" 70*guiScale . " w" guiWidth-borderSize . " hwndErrorMsgTextHandler" . " Center +BackgroundTrans c" colorTradesInfos1,% noTradeMsg
-			Gui, Add, Tab3,% "x" borderSize . " y" 30*guiScale . " w" . guiWidth-borderSize " h" (tabHeight)*guiScale . "  vTab hwndTabHandler gGui_Trades_OnTabSwitch Section -Wrap",% "1"
+			Gui, Add, Tab3,% "x" borderSize . " y" 30*guiScale . " w" . guiWidth-borderSize " h" (tabHeight)*guiScale . " altsubmit vTab hwndTabHandler gGui_Trades_OnTabSwitch Section -Wrap",% "1"
 			TradesGUI_Controls.Insert("Tab", TabHandler)
 
 			Loop %maxTabsRendered% {
@@ -553,6 +811,7 @@ Gui_Trades(mode="", tradeInfos="") {
 				Gui, Add, Text,% "xp" . " yp" . " w0" . " h0" . " vPIDSlot" index . " hwndPIDSlot" index "Handler +BackgroundTrans" . " c" colorTradesInfos2,% ""
 				Gui, Add, Text,% "xp" . " yp" . " w0" . " h0" . " vDateSlot" index . " hwndDateSlot" index "Handler +BackgroundTrans" . " c" colorTradesInfos2,% ""
 				Gui, Add, Text,% "xp" . " yp" . " w0" . " h0" . " vGuildSlot" index . " hwndGuildSlot" index "Handler +BackgroundTrans" . " c" colorTradesInfos2,% ""
+				Gui, Add, Text,% "xp" . " yp" . " w0" . " h0" . " vInAreaSlot" index . " hwndInAreaSlot" index "Handler +BackgroundTrans" . " c" colorTradesInfos2,% ""
 
 				TradesGUI_Controls.Insert("Buyer_Slot_" index,BuyerSlot%index%Handler)
 				TradesGUI_Controls.Insert("Item_Slot_" index,ItemSlot%index%Handler)
@@ -563,6 +822,7 @@ Gui_Trades(mode="", tradeInfos="") {
 				TradesGUI_Controls.Insert("PID_Slot_" index,PIDSlot%index%Handler)
 				TradesGUI_Controls.Insert("Date_Slot_" index,DateSlot%index%Handler)
 				TradesGUI_Controls.Insert("Guild_Slot_" index,GuildSlot%index%Handler)
+				TradesGUI_Controls.Insert("InArea_Slot_" index,InAreaSlot%index%Handler)
 
 				hexCodes := ["41", "42", "45", "43", "44"] ; 41:Clip/42:Whis/43:Trade/44:Kick/45:Inv
 				ctrlActions := ["Clipboard" , "Whisper", "Invite", "Trade", "Kick"]
@@ -660,8 +920,9 @@ Gui_Trades(mode="", tradeInfos="") {
 
 ;				Tab Pictures
 				Gui, Add, Picture,% "x" xpos*guiScale . " y" ypos*guiScale . " w" 48*guiScale . " h" 20*guiScale " hwndTabIMG" index "Handler" . " vTabIMG" index . " gGui_Trades_Skinned_OnTabSwitch +BackgroundTrans",% programSkinFolderPath "\" activeSkin "\TabInactive.png"
-				Gui, Font,% "Bold Q" fontQual
+				Gui, Font,% "w500 Q" fontQual
 				Gui, Add, Text,% "xp" . " yp+" 3*guiScale . " w" 48*guiScale . " h" 20*guiScale . " hwndTabTXT" index "Handler" . " vTabTXT" index . " gGui_Trades_Skinned_OnTabSwitch +BackgroundTrans 0x01 c" colorTabs,% index
+				Gui, Add, Text,% "xp" . " yp" . " w0" . " h0" . " vTabNum" index . " hwndTabNum" index "Handler Hidden",% index
 				Gui, Font, Norm S%fontSize% Q%fontQual%
 
 ;				Buyer / Item / ... Static Text
@@ -683,12 +944,15 @@ Gui_Trades(mode="", tradeInfos="") {
 				Gui, Add, Text,% "xp" . " yp" . " w0" . " h0" . " vPIDSlot" index . " hwndPIDSlot" index "Handler",% ""
 				Gui, Add, Text,% "xp" . " yp" . " w0" . " h0" . " vDateSlot" index . " hwndDateSlot" index "Handler",% ""
 				Gui, Add, Text,% "xp" . " yp" . " w0" . " h0" . " vGuildSlot" index . " hwndGuildSlot" index "Handler",% ""
+				Gui, Add, Text,% "xp" . " yp" . " w0" . " h0" . " vInAreaSlot" index . " hwndInAreaSlot" index "Handler",% ""
 
 ;				Hide the controls. They will be re-enabled later, based on the current amount of trade requests.
 				GuiControl, Trades:Hide,% TabIMG%index%Handler
 				GuiControl, Trades:Hide,% TabTXT%index%Handler
+				GuiControl, Trades:Hide,% TabNUM%index%Handler
 				TradesGUI_Controls.Insert("Tab_IMG_" index,TabIMG%index%Handler)
 				TradesGUI_Controls.Insert("Tab_TXT_" index,TabTXT%index%Handler)
+				TradesGUI_Controls.Insert("Tab_NUM_" index,TabNUM%index%Handler)
 
 				GuiControl, Trades:Hide,BuyerSlot%index%
 				GuiControl, Trades:Hide,ItemSlot%index%
@@ -705,6 +969,7 @@ Gui_Trades(mode="", tradeInfos="") {
 				TradesGUI_Controls.Insert("PID_Slot_" index,PIDSlot%index%Handler)
 				TradesGUI_Controls.Insert("Date_Slot_" index,DateSlot%index%Handler)
 				TradesGUI_Controls.Insert("Guild_Slot_" index,GuildSlot%index%Handler)
+				TradesGUI_Controls.Insert("InArea_Slot_" index,InAreaSlot%index%Handler)
 			}
 
 			hexCodes := ["41", "42", "45", "43", "44"] ; 41:Clip/42:Whis/43:Trade/44:Kick/45:Inv
@@ -856,7 +1121,6 @@ Gui_Trades(mode="", tradeInfos="") {
 		tabsList := "", isGuiActive := false
 		Loop % tradeInfos.Max_Index {
 			isGuiActive := true
-			tabsList .= "|" A_Index
 			GuiControl, Trades:,% buyerSlot%A_Index%Handler,% tradeInfos[A_Index "_Buyer"]
 			GuiControl, Trades:,% itemSlot%A_Index%Handler,% tradeInfos[A_Index "_Item"]
 			GuiControl, Trades:,% priceSlot%A_Index%Handler,% tradeInfos[A_Index "_Price"]
@@ -866,12 +1130,16 @@ Gui_Trades(mode="", tradeInfos="") {
 			GuiControl, Trades:,% OtherSlot%A_Index%Handler,% tradeInfos[A_Index "_Other"]
 			GuiControl, Trades:,% DateSlot%A_Index%Handler,% tradeInfos[A_Index "_Date"]
 			GuiControl, Trades:,% GuildSlot%A_Index%Handler,% tradeInfos[A_Index "_Guild"]
+			GuiControl, Trades:,% InAreaSlot%A_Index%Handler,% tradeInfos[A_Index "_InArea"]
+
+			tabtitle := Get_Tab_Title(A_Index)
+			tabsList .= "|" tabTitle
 			if ( A_Index <= maxTabsRow && activeSkin != "System" ) {
 				GuiControl, Trades:Show,% TabIMG%A_Index%Handler
 				GuiControl, Trades:Show,% TabTXT%A_Index%Handler
 			}
 		}
-
+		Gui_Trades_Skinned_Update_Tab_Titles()
 ;		Handle some GUI elements
 		if (isGuiActive) {
 			showState := "Show"
@@ -904,6 +1172,7 @@ Gui_Trades(mode="", tradeInfos="") {
 			tabDeleted := tabsCount+1
 			GuiControl, Trades:Hide,% TabIMG%tabDeleted%Handler
 			GuiControl, Trades:Hide,% TabTXT%tabDeleted%Handler
+			GuiControl, Trades:Hide,% TabNUM%tabDeleted%Handler
 
 			Loop 9 { ; Hide or show the controls.
 				GuiControl, Trades:%showState%,% CustomBtn%A_Index%Handler
@@ -1038,9 +1307,10 @@ Gui_Trades(mode="", tradeInfos="") {
 	Gui_Trades_Skinned_OnTabSwitch:
 		Gui, Trades:Submit, NoHide
 
-		if RegExMatch(A_GuiControl, "TabIMG|TabTXT") {
+		if RegExMatch(A_GuiControl, "TabIMG|TabTXT|TabNUM") {
 			RegExMatch(A_GuiControl, "\d+", btnID)
-			GuiControlGet, tabID, Trades:,% TradesGUI_Controls["Tab_TXT_" btnID]
+			GuiControlGet, tabId, Trades:,% TradesGUI_Controls["Tab_NUM_" btnID]
+			RegExMatch(tabId, "\d+", tabID)
 			TradesGUI_Values.Active_Tab := tabID
 		}
 
@@ -1287,8 +1557,11 @@ Gui_Trades_Skinned_Arrow_Left(CtrlHwnd="", GuiEvent="", EventInfo="") {
 		index := maxTabsRow
 		Loop %maxTabsRow% {
 			index := A_Index
-			txtContent := tabsRange.First_Tab+index-2
-			GuiControl,Trades:,% TradesGUI_Controls["Tab_TXT_" index],% txtContent
+			tabIndex := tabsRange.First_Tab+index-2
+
+			tabTitle := Get_Tab_Title(tabIndex)
+			GuiControl,Trades:,% TradesGUI_Controls["Tab_TXT_" index],% tabTitle
+			GuiControl,Trades:,% TradesGUI_Controls["Tab_NUM_" index],% tabIndex
 		}
 		Gui_Trades_Skinned_Set_Tab_Images_State("LEFT")
 	}	
@@ -1322,8 +1595,11 @@ Gui_Trades_Skinned_Arrow_Right(CtrlHwnd="", GuiEvent="", EventInfo="", goFar=0) 
 		index := maxTabsRow
 		Loop %maxTabsRow% {
 			index := A_Index
-			txtContent := tabsRange.First_Tab+index
-			GuiControl,Trades:,% TradesGUI_Controls["Tab_TXT_" index],% txtContent
+			tabIndex := tabsRange.First_Tab+index
+
+			tabTitle := Get_Tab_Title(tabIndex)
+			GuiControl,Trades:,% TradesGUI_Controls["Tab_TXT_" index],% tabTitle
+			GuiControl,Trades:,% TradesGUI_Controls["Tab_NUM_" index],% tabIndex
 		}
 		Gui_Trades_Skinned_Set_Tab_Images_State("RIGHT")
 	}
@@ -1332,8 +1608,8 @@ Gui_Trades_Skinned_Arrow_Right(CtrlHwnd="", GuiEvent="", EventInfo="", goFar=0) 
 Gui_TradeS_Skinned_Get_Tabs_Images_Range() {
 	global TradesGUI_Values, TradesGUI_Controls, ProgramSettings, ProgramValues
 
-	GuiControlGet, lastTab, Trades:,% TradesGUI_Controls["Tab_TXT_" TradesGUI_Values.Max_Tabs_Per_Row]
-	GuiControlGet, firstTab, Trades:,% TradesGUI_Controls["Tab_TXT_1"]
+	GuiControlGet, lastTab, Trades:,% TradesGUI_Controls["Tab_NUM_" TradesGUI_Values.Max_Tabs_Per_Row]
+	GuiControlGet, firstTab, Trades:,% TradesGUI_Controls["Tab_NUM_1"]
 
 	return {Last_Tab:lastTab,First_Tab:firstTab}
 }
@@ -1382,8 +1658,7 @@ Gui_Trades_Skinned_Show_Tab_Content(showTabID="") {
 	previousID := TradesGUI_Values.Previous_Active_Tab
 	currentID := TradesGUI_Values.Active_Tab
 	previousID := (previousID="")?(1):(previousID)
-
-	showTabID := (showTabID)?(showTabID):(currentID)
+	showTabID := (showTabID)?(showTabID):(currentId)
 
 ;	Hide previous tab, show current tab
 	Loop 2 {
@@ -1534,6 +1809,7 @@ Gui_Trades_Redraw(msg, params="") {
 			allTrades.1_PID			:= 0
 			allTrades.1_Date		:= A_YYYY "-" A_MM "-" A_DD
 			allTrades.1_Guild		:= ""
+			allTrades.1_InArea		:= 0
 		}
 	}
 	Gui_Trades(msg)
@@ -1548,6 +1824,7 @@ Gui_Trades_Get_Tab_ID() {
 	Global TradesGUI_Controls
 
 	GuiControlGet, tabID, Trades:,% TradesGUI_Controls.Tab
+	RegExMatch(tabID, "\d+", returnId)
 	return tabID
 }
 
@@ -1557,7 +1834,7 @@ Gui_Trades_Check_Duplicate(currentActiveTab) {
 */
 	duplicates := currentActiveTab
 	messagesArray := Gui_Trades_Manage_Trades("GET_ALL")
-	maxIndex := messagesArray.MaxIndex
+	maxIndex := messagesArray.Max_Index
 	currentTabInfos := Gui_Trades_Get_Trades_Infos(currentActiveTab)
 	arrayKey := 1
 	Loop %maxIndex% {
@@ -1567,6 +1844,7 @@ Gui_Trades_Check_Duplicate(currentActiveTab) {
 				duplicates .= "|" A_Index
 				arrayKey++
 			}
+
 		}
 	}
 	Sort, duplicates, D| N R
@@ -1659,6 +1937,7 @@ Gui_Trades_Get_Trades_Infos(tabID){
 	GuiControlGet, tabTime, Trades:,% TradesGUI_Controls["Time_Slot_" tabID]
 	GuiControlGet, tabDate, Trades:,% TradesGUI_Controls["Date_Slot_" tabID]
 	GuiControlGet, tabGuild, Trades:,% TradesGUI_Controls["Guild_Slot_" tabID]
+	GuiControlGet, tabInArea, Trades:,% TradesGUI_Controls["InArea_Slot_" tabID]
 
 	if RegExMatch(tabLocation, "(.*)\(Tab:(.*) / Pos:(.*)\)", tabLocationPat) 
 		leagueName := tabLocationPat1, stashName := tabLocationPat2, stashPos := tabLocationPat3
@@ -1685,7 +1964,9 @@ Gui_Trades_Get_Trades_Infos(tabID){
 				,PID:tabPID
 				,Time:tabTime
 				,Date_YYYYMMDD:tabDate
-				,TabID:tabID}
+				,TabID:tabID
+				,InArea:tabInArea}
+
 
 	return tabInfos
 }
@@ -1877,6 +2158,15 @@ Gui_Trades_Manage_Trades(mode, newItemInfos="", activeTabID=""){
 			}
 			else break
 		}
+	;	___InArea___
+		Loop {
+			InAreasCount := A_Index
+			GuiControlGet, content, Trades:,% TradesGUI_Controls["InArea_Slot_" A_Index]
+			if ( content != "" ) {
+				returnArray.Insert(A_Index "_InArea", content)
+			}
+			else break
+		}	
 
 		returnArray.Insert("Max_Index", actualTabsCount)
 	}
@@ -1891,10 +2181,12 @@ Gui_Trades_Manage_Trades(mode, newItemInfos="", activeTabID=""){
 		returnArray.Insert(otherCount "_Other", newItemInfos.Other)
 		returnArray.Insert(datesCount "_Date", newItemInfos.Date)
 		returnArray.Insert(guildsCount "_Guild", newItemInfos.Guild)
+		returnArray.Insert(InAreasCount "_InArea", newItemInfos.InArea)
 		returnArray.Insert("Max_Index", bCount)
 	}
 
 	if ( mode = "REMOVE_CURRENT") {
+		GuiControlGet, buyerName, Trades:,% TradesGUI_Controls["Buyer_Slot_" btnID] ; Get the name of removed buyer for area status
 	;	___BUYERS___
 		Loop {
 			if ( A_Index < btnID )
@@ -2039,9 +2331,23 @@ Gui_Trades_Manage_Trades(mode, newItemInfos="", activeTabID=""){
 		}
 		counter--
 		GuiControl,Trades:,% TradesGUI_Controls["Guild_Slot_" counter],% ""
-
+		
+	;	___InArea___
+			Loop {
+				if ( A_Index < btnID )
+					counter := A_Index
+				else if ( A_Index >= btnID )
+					counter := A_Index+1
+				GuiControlGet, content, Trades:,% TradesGUI_Controls["InArea_Slot_" counter]
+				if ( content != "" ) {
+					index := A_Index
+					returnArray.Insert(index "_InArea", content)
+				}
+				else break
+			}
+			counter--
+			GuiControl,Trades:,% TradesGUI_Controls["InArea_Slot_" counter],% ""
 	}
-
 	return returnArray
 }
 
@@ -2106,7 +2412,7 @@ Gui_Settings() {
 	Gui, Settings:New, +AlwaysOnTop +SysMenu -MinimizeBox -MaximizeBox +OwnDialogs +LabelGui_Settings_ hwndSettingsHandler,% programName " - Settings"
 	Gui, Settings:Default
 
-	tabsList := "Settings|Customization|Customization Appearance|Customization Custom Buttons|Customization Smaller Buttons|Hotkeys|Hotkeys Basic|Hotkeys Advanced|Hotkeys Special"
+	tabsList := "Settings|Customization|Customization Appearance|Customization Notifications|Customization Custom Buttons|Customization Smaller Buttons|Hotkeys|Hotkeys Basic|Hotkeys Advanced|Hotkeys Special"
 
 	guiXWorkArea := 150, guiYWorkArea := 10
 	Gui, Add, TreeView, x10 y10 h380 w130 -0x4 -Buttons gGui_Settings_TreeView
@@ -2115,6 +2421,7 @@ Gui_Settings() {
     P2C1 := TV_Add("Appearance", P2, "Expand")
     P2C2 := TV_Add("Custom Buttons", P2, "Expand")
     P2C3 := TV_Add("Smaller Buttons", P2, "Expand")
+    P2C4 := TV_Add("Notifications", P2, "Expand")
     P3 := TV_Add("Hotkeys","","Expand")
     P3C1 := TV_Add("Basic", P3, "Expand")
     P3C2 := TV_Add("Advanced", P3, "Expand")
@@ -2146,20 +2453,6 @@ Gui_Settings() {
 			Gui, Add, Slider, xp+10 yp+15 hwndShowTransparencyHandler gGui_Settings_Transparency vShowTransparency AltSubmit ToolTip Range0-100
 			Gui, Add, Text, xp-10 yp+30,Active (trades are on queue)
 			Gui, Add, Slider, xp+10 yp+15 hwndShowTransparencyActiveHandler gGui_Settings_Transparency vShowTransparencyActive AltSubmit ToolTip Range30-100
-
-; ;		Notifications
-;			 Trade Sound Group
-			Gui, Add, GroupBox,% "x" guiXWorkarea+215 . " y" guiYWorkArea+70 . " w205 h110" . " c000000",Notifications
-			Gui, Add, Checkbox, xp+10 yp+20 vNotifyTradeToggle hwndNotifyTradeToggleHandler,Trade
-			Gui, Add, Edit, xp+65 yp-2 w70 h17 vNotifyTradeSound hwndNotifyTradeSoundHandler ReadOnly
-			Gui, Add, Button, xp+75 yp-2 h20 vNotifyTradeBrowse gGui_Settings_Notifications_Browse,Browse
-;			Whisper Sound Group
-			Gui, Add, Checkbox,% "xp-140 yp+25" . " vNotifyWhisperToggle hwndNotifyWhisperToggleHandler",Whisper
-			Gui, Add, Edit, xp+65 yp-2 w70 h17 vNotifyWhisperSound hwndNotifyWhisperSoundHandler ReadOnly
-			Gui, Add, Button, xp+75 yp-2 h20 vNotifyWhisperBrowse gGui_Settings_Notifications_Browse,Browse
-;			Whisper Tray Notification
-			Gui, Add, Checkbox,% "xp-140"   " yp+29 vNotifyWhisperTray hwndNotifyWhisperTrayHandler",Show tray notifications
-			Gui, Add, Checkbox,% "xp"  " yp+14 vNotifyWhisperFlash hwndNotifyWhisperFlashHandler",Flash the taskbar icon
 ; ;		Support
 		Gui, Add, GroupBox,% "x" guiXWorkArea+10 " y" guiYWorkArea+240 . " w200 h85" . " c000000",Support
 		Gui, Add, Checkbox, xp+90 yp+20 vMessageSupportToggle hwndMessageSupportToggleHandler
@@ -2176,6 +2469,9 @@ Gui_Settings() {
 
 	Gui, Add, GroupBox, x%GuiXWorkArea% yp+40 w430 h55 c000000 Section Center,Smaller Buttons:
 		Gui, Add, Text,xp+10 yp+20 BackgroundTrans,Choose to bind the buttons to an hotkey.
+
+	Gui, Add, GroupBox, x%GuiXWorkArea% yp+40 w430 h55 c000000 Section Center,Notifications:
+		Gui, Add, Text,xp+10 yp+20 BackgroundTrans,Add or edit sounds and tab notifications.
 ;	--------------------
 	Gui, Tab, Customization Appearance
 	Gui, Add, GroupBox,% "x" guiXWorkarea . " y" guiYWorkArea-5 . " w430 h55" . " c000000",Preset
@@ -2349,6 +2645,55 @@ Gui_Settings() {
 		   	index := A_Index
 	}
 	key := "", element := "", hexCodes := "", xpos := "", ypos := "", handler := "", ConvertesChars := "", nString := ""
+;------------------------------
+;	Notifications
+	Gui, Tab, Customization Notifications
+
+	Gui, Add, GroupBox,% "x" GuiXWorkArea " y" GuiYWorkArea-5 " w430 h55" . " c000000 Section Center",About this tab:
+		Gui, Add, Text,xs+10 ys+15 BackgroundTrans,Change the notifications for whisper, trade, and user joined messages.
+		Gui, Add, Text,xp yp+15 BackgroundTrans,Customize tab title notifications for other messages and buyer joined
+
+		Gui, Add, GroupBox,% " x" guiXWorkArea . " ys+60" . " w430 h280" . " c000000"
+			; Sound Settings
+			Gui, Add, GroupBox,% "x" guiXWorkarea+5 . " y" guiYWorkArea+70 . " w205 h110" . " c000000",Sounds
+				; Trade Sound Group
+				Gui, Add, Checkbox, xp+10 yp+20 vNotifyTradeToggle hwndNotifyTradeToggleHandler,Trade
+				Gui, Add, Edit, xp+65 yp-2 w70 h17 vNotifyTradeSound hwndNotifyTradeSoundHandler ReadOnly
+				Gui, Add, Button, xp+75 yp-2 h20 vNotifyTradeBrowse gGui_Settings_Notifications_Browse,Browse
+				; Whisper Sound Group
+				Gui, Add, Checkbox,% "xp-140 yp+25" . " vNotifyWhisperToggle hwndNotifyWhisperToggleHandler",Whisper
+				Gui, Add, Edit, xp+65 yp-2 w70 h17 vNotifyWhisperSound hwndNotifyWhisperSoundHandler ReadOnly
+				Gui, Add, Button, xp+75 yp-2 h20 vNotifyWhisperBrowse gGui_Settings_Notifications_Browse,Browse
+				; Whisper Sound Group
+				Gui, Add, Checkbox,% "xp-140 yp+25" . " vNotifyJoinedToggle hwndNotifyJoinedToggleHandler",Joined
+				Gui, Add, Edit, xp+65 yp-2 w70 h17 vNotifyJoinedSound hwndNotifyJoinedSoundHandler ReadOnly
+				Gui, Add, Button, xp+75 yp-2 h20 vNotifyJoinedBrowse gGui_Settings_Notifications_Browse,Browse
+				; Other Sound Group
+				Gui, Add, Checkbox,% "xp-140 yp+25" . " vNotifyOtherToggle hwndNotifyOtherToggleHandler",Other
+				Gui, Add, Edit, xp+65 yp-2 w70 h17 vNotifyOtherSound hwndNotifyOtherSoundHandler ReadOnly
+				Gui, Add, Button, xp+75 yp-2 h20 vNotifyOtherBrowse gGui_Settings_Notifications_Browse,Browse
+
+
+
+			; Tabs Settings
+			Gui, Add, GroupBox,% " x" guiXWorkArea+215 . " y" guiYWorkArea+70 " w205 h110" . " c000000",Tabs
+				; Tab Settings Info
+				Gui, Add, Text,xp+10 yp+15 BackgroundTrans,Set a custom tab notification symbol
+				Gui, Add, Text,xp yp+15 BackgroundTrans,Input added after Tab ID by default
+				Gui, Add, Text,xp yp+15 BackgroundTrans,Adding `%id`% will output the Tab ID 
+				; Tab Joined Group
+				Gui, Add, Checkbox, xp yp+20 vTabJoinedToggle hwndTabJoinedToggleHandler,Joined
+				Gui, Add, Edit, xp+50 yp-2 w80 h17 vTabJoinedSymbol hwndTabJoinedSymbolHandler
+				Gui, Add, Text,xp+85 yp BackgroundTrans,Default: #
+				; Tab Other Group
+				Gui, Add, Checkbox,% "xp-135 yp+25" . " vTabOtherToggle hwndTabOtherToggleHandler",Other
+				Gui, Add, Edit, xp+50 yp-2 w80 h17 vTabOtherSymbol hwndTabOtherSymbolHandler
+				Gui, Add, Text,xp+85 yp BackgroundTrans,Default: @
+			; Misc Settings
+			Gui, Add, GroupBox,% "x" guiXWorkarea+5 . " y" guiYWorkArea+180 . " w415 h140" . " c000000",Misc
+				; Whisper Tray Notification
+				Gui, Add, Checkbox,% "xp+10"   " yp+20 vNotifyWhisperTray hwndNotifyWhisperTrayHandler",Show tray notifications
+				Gui, Add, Checkbox,% "xp"  " yp+14 vNotifyWhisperFlash hwndNotifyWhisperFlashHandler",Flash the taskbar icon
 
 ;------------------------------
 ;	Hotkeys Tab
@@ -2543,6 +2888,7 @@ return
 	  			:(evntinf=P2C1)?("Customization Appearance")
 	  			:(evntinf=P2C2)?("Customization Custom Buttons")
 	  			:(evntinf=P2C3)?("Customization Smaller Buttons")
+	  			:(evntinf=P2C4)?("Customization Notifications")
 	  			:(evntinf=P3)?("Hotkeys")
 	  			:(evntinf=P3C1)?("Hotkeys Basic")
 	  			:(evntinf=P3C2)?("Hotkeys Advanced")
@@ -2643,8 +2989,18 @@ return
 				GuiControl, Settings:,% NotifyWhisperSoundHandler,% soundFileName
 				whispersSoundFile := soundFile
 			}
+			if ( A_GuiControl = "NotifyJoinedBrowse" ) {
+				GuiControl, Settings:,% NotifyJoinedSoundHandler,% soundFileName
+				joinedSoundFile := soundFile
+			}
+			if ( A_GuiControl = "NotifyOtherBrowse" ) {
+				GuiControl, Settings:,% NotifyOtherSoundHandler,% soundFileName
+				otherSoundFile := soundFile
+			}
 		}
 	return
+
+
 	
 	Gui_Settings_Btn_Apply:
 		Gui, +OwnDialogs
@@ -2667,16 +3023,38 @@ return
 ;	Clipboard
 		IniWrite,% ClipTab,% iniFilePath,AUTO_CLIP,Clip_On_Tab_Switch
 ;	Notifications
-		IniWrite,% NotifyTradeToggle,% iniFilePath,NOTIFICATIONS,Trade_Toggle
-		IniWrite,% NotifyTradeSound,% iniFilePath,NOTIFICATIONS,Trade_Sound
-		if ( tradesSoundFile )
-			IniWrite,% tradesSoundFile,% iniFilePath,NOTIFICATIONS,Trade_Sound_Path
-		IniWrite,% NotifyWhisperToggle,% iniFilePath,NOTIFICATIONS,Whisper_Toggle
-		IniWrite,% NotifyWhisperSound,% iniFilePath,NOTIFICATIONS,Whisper_Sound
-		if ( whispersSoundFile )
-			IniWrite,% whispersSoundFile,% iniFilePath,NOTIFICATIONS,Whisper_Sound_Path
-		IniWrite,% NotifyWhisperTray,% iniFilePath,NOTIFICATIONS,Whisper_Tray
-		IniWrite,% NotifyWhisperFlash,% iniFilePath,NOTIFICATIONS,Whisper_Flash
+		; SOUNDS
+			; Trade Sound
+			IniWrite,% NotifyTradeToggle,% iniFilePath,NOTIFICATIONS,Trade_Toggle
+			IniWrite,% NotifyTradeSound,% iniFilePath,NOTIFICATIONS,Trade_Sound
+			if ( tradesSoundFile )
+				IniWrite,% tradesSoundFile,% iniFilePath,NOTIFICATIONS,Trade_Sound_Path
+			; Whisper Sound
+			IniWrite,% NotifyWhisperToggle,% iniFilePath,NOTIFICATIONS,Whisper_Toggle
+			IniWrite,% NotifyWhisperSound,% iniFilePath,NOTIFICATIONS,Whisper_Sound
+			if ( whispersSoundFile )
+				IniWrite,% whispersSoundFile,% iniFilePath,NOTIFICATIONS,Whisper_Sound_Path
+			; Joined Sound
+			IniWrite,% NotifyJoinedToggle,% iniFilePath,NOTIFICATIONS,Joined_Toggle
+			IniWrite,% NotifyJoinedSound,% iniFilePath,NOTIFICATIONS,Joined_Sound
+			if ( joinedSoundFile )
+				IniWrite,% joinedSoundFile,% iniFilePath,NOTIFICATIONS,Joined_Sound_Path
+			; Other Sound
+			IniWrite,% NotifyOtherToggle,% iniFilePath,NOTIFICATIONS,Other_Toggle
+			IniWrite,% NotifyOtherSound,% iniFilePath,NOTIFICATIONS,Other_Sound
+			if ( otherSoundFile )
+				IniWrite,% otherSoundFile,% iniFilePath,NOTIFICATIONS,Other_Sound_Path
+		; TABS
+			; Joined Tab
+			IniWrite,% TabJoinedToggle,% iniFilePath,NOTIFICATIONS,Tab_Joined_Toggle
+			IniWrite,% TabJoinedSymbol,% iniFilePath,NOTIFICATIONS,Tab_Joined_Symbol
+			; Other Tab
+			IniWrite,% TabOtherToggle,% iniFilePath,NOTIFICATIONS,Tab_Other_Toggle
+			IniWrite,% TabOtherSymbol,% iniFilePath,NOTIFICATIONS,Tab_Other_Symbol
+		; MISC
+			IniWrite,% NotifyWhisperTray,% iniFilePath,NOTIFICATIONS,Whisper_Tray
+			IniWrite,% NotifyWhisperFlash,% iniFilePath,NOTIFICATIONS,Whisper_Flash
+
 ;	Support Message
 		IniWrite,% MessageSupportToggle,% iniFilePath,SETTINGS,Support_Text_Toggle
 ;	Hotkeys
@@ -3029,13 +3407,13 @@ Gui_Settings_Get_Settings_Arrays() {
 	}
 
 	returnArray.NOTIFICATIONS_HandlersArray := Object()
-	returnArray.NOTIFICATIONS_HandlersArray.Insert(0, "NotifyTradeToggle", "NotifyTradeSound", "NotifyWhisperToggle", "NotifyWhisperSound", "NotifyWhisperTray", "NotifyWhisperFlash")
+	returnArray.NOTIFICATIONS_HandlersArray.Insert(0, "NotifyTradeToggle", "NotifyTradeSound", "NotifyWhisperToggle", "NotifyWhisperSound","NotifyJoinedToggle", "NotifyJoinedSound", "NotifyOtherToggle", "NotifyOtherSound", "TabJoinedToggle", "TabJoinedSymbol", "TabOtherToggle", "TabOtherSymbol", "NotifyWhisperTray", "NotifyWhisperFlash")
 	returnArray.NOTIFICATIONS_HandlersKeysArray := Object()
-	returnArray.NOTIFICATIONS_HandlersKeysArray.Insert(0, "Trade_Toggle", "Trade_Sound", "Whisper_Toggle", "Whisper_Sound", "Whisper_Tray", "Whisper_Flash")
+	returnArray.NOTIFICATIONS_HandlersKeysArray.Insert(0, "Trade_Toggle", "Trade_Sound", "Whisper_Toggle", "Whisper_Sound", "Joined_Toggle", "Joined_Sound", "Other_Toggle", "Other_Sound", "Tab_Joined_Toggle", "Tab_Joined_Symbol","Tab_Other_Toggle", "Tab_Other_Symbol", "Whisper_Tray", "Whisper_Flash")
 	returnArray.NOTIFICATIONS_KeysArray := Object()
-	returnArray.NOTIFICATIONS_KeysArray.Insert(0, "Trade_Toggle", "Trade_Sound", "Trade_Sound_Path", "Whisper_Toggle", "Whisper_Sound", "Whisper_Sound_Path", "Whisper_Tray", "Whisper_Flash")
+	returnArray.NOTIFICATIONS_KeysArray.Insert(0, "Trade_Toggle", "Trade_Sound", "Trade_Sound_Path", "Whisper_Toggle", "Whisper_Sound", "Whisper_Sound_Path", "Joined_Toggle", "Joined_Sound", "Joined_Sound_Path", "Other_Toggle", "Other_Sound", "Other_Sound_Path", "Tab_Joined_Toggle", "Tab_Joined_Symbol","Tab_Other_Toggle", "Tab_Other_Symbol", "Whisper_Tray", "Whisper_Flash")
 	returnArray.NOTIFICATIONS_DefaultValues := Object()
-	returnArray.NOTIFICATIONS_DefaultValues.Insert(0, "1", "WW_MainMenu_Letter.wav", programSFXFolderPath "\WW_MainMenu_Letter.wav", "0", "None", "", "1", "0")
+	returnArray.NOTIFICATIONS_DefaultValues.Insert(0, "1", "WW_MainMenu_Letter.wav", programSFXFolderPath "\WW_MainMenu_Letter.wav", "0", "None", "", "1", "WW_Get_Item.wav", programSFXFolderPath "\WW_Get_Item.wav", "0", "None", "", "1", "#", "1", "@", "1", "0")
 
 	returnArray.HOTKEYS_ADVANCED_HandlersArray := Object()
 	returnArray.HOTKEYS_ADVANCED_HandlersKeysArray := Object()
@@ -3265,7 +3643,20 @@ Get_Control_ToolTip(controlName) {
 	NotifyWhisperBrowse_TT := NotifyWhisperSound_TT := NotifyWhisperToggle_TT := "Play a sound when you receive a regular whisper"
 	. "`nTick the case to enable."
 	. "`nClick on [Browse] to select a sound file."
-	
+
+	NotifyJoinedBrowse_TT := NotifyJoinedSound_TT := NotifyJoinedToggle_TT := "Play a sound when you a buyer joins the area"
+	. "`nTick the case to enable."
+	. "`nClick on [Browse] to select a sound file."
+
+	NotifyOtherBrowse_TT := NotifyOtherSound_TT := NotifyOtherToggle_TT := "Play a sound when a buyer sends a new message"
+	. "`nTick the case to enable."
+	. "`nClick on [Browse] to select a sound file."
+
+	TabJoinedToggle_TT := TabJoinedSymbol_TT := TabOtherToggle_TT := TabOtherSymbol_TT := "Add a notification to tab when buyer joins or whispers"
+	. "`nInput is added after the Tab ID by default"
+	. "`nYou can use %id% to position the Tab ID, e.g. @ %id% @ "
+	. "`nTick the case to enable."
+
 	NotifyWhisperTray_TT := "Show a tray notification when you receive"
 	. "`na whisper while the game window is not active."
 
@@ -5277,6 +5668,8 @@ Extract_Sound_Files() {
 	FileInstall, Resources\SFX\MM_Tatl_Hey.wav,% sfxFolder "\MM_Tatl_Hey.wav", 0
 	FileInstall, Resources\SFX\WW_MainMenu_CopyErase_Start.wav,% sfxFolder "\WW_MainMenu_CopyErase_Start.wav", 0
 	FileInstall, Resources\SFX\WW_MainMenu_Letter.wav,% sfxFolder "\WW_MainMenu_Letter.wav", 0
+	FileInstall, Resources\SFX\WW_Get_Rupee.wav,% sfxFolder "\WW_Get_Rupee.wav", 0
+	FileInstall, Resources\SFX\WW_Get_Item.wav,% sfxFolder "\WW_Get_Item.wav", 0
 }
 
 Extract_Data_Files() {
@@ -6041,8 +6434,86 @@ Fade_Tray_Notification() {
 	Gui, TrayNotification:Destroy
 }
 
+Has_Val(object, value) {
+	if !(IsObject(object)) || (value.Length() = 0){
+		return 0
+	}
+	for i, val in object {
+		if (val = value) {
+			return i
+		}
+	}
+	return 0
+}
 
+Get_Tab_Title(tabId) {
+	global ProgramSettings
+	tabInfos := Gui_Trades_Get_Trades_Infos(tabId)
+	if (tabInfos.InArea = 1 && ProgramSettings.Tab_Joined_Toggle = 1) {
+		joinedSymbol := ProgramSettings.Tab_Joined_Symbol
+		if (InStr(joinedSymbol, "%id%")) {
+			return StrReplace(joinedSymbol, "%id%", tabId)
+		} else {
+			return tabID " " joinedSymbol
+		}
+	} else if (tabInfos.Other != "-" && tabInfos.Other != "'n" && tabInfos.Other != "" && ProgramSettings.Tab_Other_Toggle = 1) {
+		otherSymbol := ProgramSettings.Tab_Other_Symbol
+		if (InStr(otherSymbol, "%id%")) {
+			 return StrReplace(otherSymbol, "%id%", tabId)
+		} else {
+			return tabID " " otherSymbol
+		}
+	} else {
+		return tabId
+	}
+}
+Set_Buyer_Area_Status(buyerID, areaStatus) {
+	global TradesGUI_Controls
+
+	GuiControl,Trades:,% TradesGUI_Controls["InArea_Slot_" buyerID],% areaStatus
+}
+
+GUI_Update_Tabs_Titles() {
+	global TradesGUI_Values, TradesGUI_Controls, ProgramSettings
+	if ( ProgramSettings.Active_Skin = "system" ) {
+		tabsCount := TradesGUI_Values.Tabs_Count
+		loop %tabsCount% {
+			index := A_Index
+			tabtitle := Get_Tab_Title(A_Index)
+			tabsList .= "|" tabTitle
+		}
+		GuiControl,Trades:,% TradesGUI_Controls["Tab"],% tabsList
+	} else {
+		Gui_Trades_Skinned_Update_Tab_Titles()
+	}
+}
+Gui_Trades_Skinned_Update_Tab_Titles() {
+	global TradesGUI_Values, TradesGUI_Controls
+	maxTabsRow := TradesGUI_Values.Max_Tabs_Per_Row
+	tabsCount := TradesGUI_Values.Tabs_Count
+	tabsRange := Gui_TradeS_Skinned_Get_Tabs_Images_Range()
+
+	if ( tabsCount >= tabsRange.Last_Tab ) {
+
+		index := maxTabsRow
+		Loop %maxTabsRow% {
+			index := A_Index
+			tabIndex := tabsRange.First_Tab+index-1
+
+			tabTitle := Get_Tab_Title(tabIndex)
+
+			GuiControl,Trades:,% TradesGUI_Controls["Tab_TXT_" index],% tabTitle
+			GuiControl,Trades:,% TradesGUI_Controls["Tab_NUM_" index],% tabIndex
+		}
+		Gui_Trades_Skinned_Set_Tab_Images_State()
+	}
+}
+if (programValues["Debug"]) {
+	Pause::Pause
+}
 #Include %A_ScriptDir%/Resources/AHK/
 #Include BinaryEncodingDecoding.ahk
 #Include JSON.ahk
+; #Include C:\Users\Masato\Documents\AutoHotkey\Lib ; Dont have these files \\ not implemented yet?
+; #Include Class_ImageButton.ahk
 ; #Include %A_ScriptDir%/Resources/AHK/BetaFuncs.ahk
