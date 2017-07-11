@@ -108,8 +108,6 @@ Start_Script() {
 
 	ProgramValues.PID 					:= DllCall("GetCurrentProcessId")
 
-	ProgramValues.Debug := (A_IsCompiled)?(0):(ProgramValues.Debug) ; Prevent from enabling debug on compiled executable
-
 	if FileExist(A_ScriptDir "/ENABLE_DEBUG.txt") {
 		FileRead, fileContent,% A_ScriptDir "/ENABLE_DEBUG.txt"
 		; Begin ./ENABLED_DEBUG.txt with debug:true and add log strings beginning next line like normal
@@ -118,7 +116,7 @@ Start_Script() {
 			ProgramValues.Debug := (debugPat1 = "true") ? 1 : 0
 			ProgramValues.DebugTxt := debugPat2
 		}
-
+		ProgramValues.Debug := (A_IsCompiled)?(0):(ProgramValues.Debug) ; Prevent from enabling debug on compiled executable
 	}
 ;	- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
