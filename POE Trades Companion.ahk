@@ -108,7 +108,6 @@ Start_Script() {
 
 	ProgramValues.PID 					:= DllCall("GetCurrentProcessId")
 
-	ProgramValues.Debug := (A_IsCompiled)?(0):(ProgramValues.Debug) ; Prevent from enabling debug on compiled executable
 
 	if FileExist(A_ScriptDir "/ENABLE_DEBUG.txt") {
 		FileRead, fileContent,% A_ScriptDir "/ENABLE_DEBUG.txt"
@@ -118,6 +117,7 @@ Start_Script() {
 			ProgramValues.Debug := (debugPat1 = "true") ? 1 : 0
 			ProgramValues.DebugTxt := debugPat2
 		}
+		ProgramValues.Debug := (A_IsCompiled)?(0):(ProgramValues.Debug) ; Prevent from enabling debug on compiled executable
 
 	}
 ;	- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
