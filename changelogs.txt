@@ -1,4 +1,11 @@
 \\
+--1.11.3--
+Fixes:
+- New whispers from the same buyer would not be added to its "Other:" slot.
+- Duplicate trading whispers from the same buyer would not be blocked.
+- A blank tab would be added to the main interface upon closing the Settings window.
+//
+\\
 --1.11.1--
 Fixes:
 - Auto-updating from pre-1.11 would fail.
