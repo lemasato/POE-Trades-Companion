@@ -6495,20 +6495,18 @@ Gui_Trades_Skinned_Update_Tab_Titles() {
 	tabsCount := TradesGUI_Values.Tabs_Count
 	tabsRange := Gui_TradeS_Skinned_Get_Tabs_Images_Range()
 
-	if ( tabsCount >= tabsRange.Last_Tab ) {
+	index := maxTabsRow
+	Loop %maxTabsRow% {
+		index := A_Index
+		tabIndex := tabsRange.First_Tab+index-1
 
-		index := maxTabsRow
-		Loop %maxTabsRow% {
-			index := A_Index
-			tabIndex := tabsRange.First_Tab+index-1
+		tabTitle := Get_Tab_Title(tabIndex)
 
-			tabTitle := Get_Tab_Title(tabIndex)
-
-			GuiControl,Trades:,% TradesGUI_Controls["Tab_TXT_" index],% tabTitle
-			GuiControl,Trades:,% TradesGUI_Controls["Tab_NUM_" index],% tabIndex
-		}
-		Gui_Trades_Skinned_Set_Tab_Images_State()
+		GuiControl,Trades:,% TradesGUI_Controls["Tab_TXT_" index],% tabTitle
+		GuiControl,Trades:,% TradesGUI_Controls["Tab_NUM_" index],% tabIndex
 	}
+	Gui_Trades_Skinned_Set_Tab_Images_State()
+
 }
 if (programValues["Debug"]) {
 	Pause::Pause
