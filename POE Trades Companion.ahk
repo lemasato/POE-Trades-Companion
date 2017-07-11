@@ -37,7 +37,6 @@ Start_Script()
 Return
 
 Start_Script() {
-
 /*
 */
 ;	Global objects declaration
@@ -584,7 +583,7 @@ Filter_Logs_Message(message) {
 				if (whispName = tradesInfos[A_Index "_Buyer"]) {
 					; Check if the player is already in the area
 					if ( areaStatus = "joined" && !tradesInfos[A_Index "_InArea"]) {
-						tradesInfos[A_Index "_InArea"] := 1
+						Set_Buyer_Area_Status(A_Index, 1)
 						updateCount ++
 						; Play sound and alert
 						if ( ProgramSettings.Joined_Toggle = 1 ) && FileExist(ProgramSettings.Joined_Sound_Path) { 
@@ -597,13 +596,13 @@ Filter_Logs_Message(message) {
 							}
 						}
 					} else if (areaStatus = "left" && tradesInfos[A_Index "_InArea"] = 1) {
-						tradesInfos[A_Index "_InArea"] := 0
+						Set_Buyer_Area_Status(A_Index, 0)
 						updateCount++
 					}
 				}
 			}
 			if ( updateCount > 0 ) {
-				Gui_Trades("UPDATE", tradesInfos)			
+				GUI_Update_Tabs_Titles()
 			}
 
 
@@ -1124,7 +1123,6 @@ Gui_Trades(mode="", tradeInfos="") {
 		tabsList := "", isGuiActive := false
 		Loop % tradeInfos.Max_Index {
 			isGuiActive := true
-			
 			GuiControl, Trades:,% buyerSlot%A_Index%Handler,% tradeInfos[A_Index "_Buyer"]
 			GuiControl, Trades:,% itemSlot%A_Index%Handler,% tradeInfos[A_Index "_Item"]
 			GuiControl, Trades:,% priceSlot%A_Index%Handler,% tradeInfos[A_Index "_Price"]
@@ -1135,18 +1133,15 @@ Gui_Trades(mode="", tradeInfos="") {
 			GuiControl, Trades:,% DateSlot%A_Index%Handler,% tradeInfos[A_Index "_Date"]
 			GuiControl, Trades:,% GuildSlot%A_Index%Handler,% tradeInfos[A_Index "_Guild"]
 			GuiControl, Trades:,% InAreaSlot%A_Index%Handler,% tradeInfos[A_Index "_InArea"]
+
 			tabtitle := Get_Tab_Title(A_Index)
 			tabsList .= "|" tabTitle
 			if ( A_Index <= maxTabsRow && activeSkin != "System" ) {
 				GuiControl, Trades:Show,% TabIMG%A_Index%Handler
 				GuiControl, Trades:Show,% TabTXT%A_Index%Handler
-				GuiControl, Trades:,% TabTXT%A_Index%Handler, %tabTitle%
-				GuiControl, Trades:,% TabNum%A_Index%Handler, %A_Index%
 			}
-			; Put an @ symbol on any tab that has a  buyer in the area
-
 		}
-
+		Gui_Trades_Skinned_Update_Tab_Titles()
 ;		Handle some GUI elements
 		if (isGuiActive) {
 			showState := "Show"
@@ -6474,10 +6469,53 @@ Get_Tab_Title(tabId) {
 		return tabId
 	}
 }
+Set_Buyer_Area_Status(buyerID, areaStatus) {
+	global TradesGUI_Controls
 
+	GuiControl,Trades:,% TradesGUI_Controls["InArea_Slot_" buyerID],% areaStatus
+}
+
+GUI_Update_Tabs_Titles() {
+	global TradesGUI_Values, TradesGUI_Controls, ProgramSettings
+	if ( ProgramSettings.Active_Skin = "system" ) {
+		tabsCount := TradesGUI_Values.Tabs_Count
+		loop %tabsCount% {
+			index := A_Index
+			tabtitle := Get_Tab_Title(A_Index)
+			tabsList .= "|" tabTitle
+		}
+		GuiControl,Trades:,% TradesGUI_Controls["Tab"],% tabsList
+	} else {
+		Gui_Trades_Skinned_Update_Tab_Titles()
+	}
+}
+Gui_Trades_Skinned_Update_Tab_Titles() {
+	global TradesGUI_Values, TradesGUI_Controls
+	maxTabsRow := TradesGUI_Values.Max_Tabs_Per_Row
+	tabsCount := TradesGUI_Values.Tabs_Count
+	tabsRange := Gui_TradeS_Skinned_Get_Tabs_Images_Range()
+
+	if ( tabsCount >= tabsRange.Last_Tab ) {
+
+		index := maxTabsRow
+		Loop %maxTabsRow% {
+			index := A_Index
+			tabIndex := tabsRange.First_Tab+index-1
+
+			tabTitle := Get_Tab_Title(tabIndex)
+
+			GuiControl,Trades:,% TradesGUI_Controls["Tab_TXT_" index],% tabTitle
+			GuiControl,Trades:,% TradesGUI_Controls["Tab_NUM_" index],% tabIndex
+		}
+		Gui_Trades_Skinned_Set_Tab_Images_State()
+	}
+}
+if (programValues["Debug"]) {
+	Pause::Pause
+}
 #Include %A_ScriptDir%/Resources/AHK/
 #Include BinaryEncodingDecoding.ahk
 #Include JSON.ahk
 ; #Include C:\Users\Masato\Documents\AutoHotkey\Lib ; Dont have these files \\ not implemented yet?
-; #Include Class_ImageButton.ahk  
+; #Include Class_ImageButton.ahk
 ; #Include %A_ScriptDir%/Resources/AHK/BetaFuncs.ahk
