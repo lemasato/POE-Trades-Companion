@@ -109,12 +109,12 @@ Start_Script() {
 
 	ProgramValues.PID 					:= DllCall("GetCurrentProcessId")
 
-	ProgramValues.Debug := (A_IsCompiled)?(0):(ProgramValues.Debug) ; Prevent from enabling debug on compiled executable
 	if FileExist(A_ScriptDir "/ENABLE_DEBUG.txt") {
 		FileRead, fileContent,% A_ScriptDir "/ENABLE_DEBUG.txt"
 		fileContent := StrReplace(fileContent, "`n", "")
 		ProgramValues.Debug := fileContent
 	}
+	ProgramValues.Debug := (A_IsCompiled)?(0):(ProgramValues.Debug) ; Prevent from enabling debug on compiled executable
 ;	- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 	GroupAdd, POEGame, ahk_exe PathOfExile.exe
@@ -288,39 +288,6 @@ Filter_Logs_Message(message) {
 			whispNameFull := Gui_Trades_RemoveGuildPrefix(whispNameFull)
 			whispName := whispNameFull.Name, whispGuild := whispNameFull.Guild
 			TradesGUI_Values.Last_Whisper := whispName
-
-			; Check existing tabs for same buyer, and add to the "Other:" slot
-			tradesInfos := Gui_Trades_Manage_Trades("GET_ALL")
-			Loop % tradesInfos.Max_Index {
-				if (whispName = tradesInfos[A_Index "_Buyer"]) {
-					otherContent := tradesInfos[A_Index "_Other"]
-					if (otherContent != "-" && otherContent != "`n") { ; Already contains text, include previous text
-						if otherContent not contains (Hover to see all messages) ; Only one message in the Other slot.
-						{
-							StringReplace, otherContent, otherContent,% "`n",% "",1 ; Remove blank lines
-							otherContent := "[" tradesInfos[A_Index "_Time"] "] " otherContent ; Add timestamp
-						}
-						StringReplace, otherContent, otherContent,% "(Hover to see all messages)`n",% "",1
-						otherText := "(Hover to see all messages)`n" otherContent "`n[" A_Hour ":" A_Min "] " whispMsg
-					}
-					else { ; Does not contains text, do not include previous text
-						otherText := "(Hover to see all messages)`n" "[" A_Hour ":" A_Min "] " whispMsg
-					}
-					setInfos := { OTHER:otherText, TabID:A_Index }
-					Gui_Trades_Set_Trades_Infos(setInfos)
-				}
-			}
-
-			if !WinActive("ahk_pid " gamePID) {
-				if ( ProgramSettings.Whisper_Tray ) {
-					Show_Tray_Notification("Whisper from " whispName, whispMsg)
-				}
-
-				if ( ProgramSettings.Whisper_Flash ) {
-					gameHwnd := WinExist("ahk_pid " gamePID)
-					DllCall("FlashWindow", UInt, gameHwnd, Int, 1)
-				}
-			}
 
 			whisp := whispName ": " whispMsg "`n"
 			; poeappRegExStr 				:= "(.*)wtb (.*) listed for (.*) in (?:(.*)\(stash ""(.*)""; left (.*), top (.*)\)|Hardcore (.*?)\W|(.*?)\W)(.*)" ; poeapp
@@ -577,6 +544,39 @@ Filter_Logs_Message(message) {
 				whispName := "", whispGuild := "", newTradeItem := "", newTradePrice := "", newTradeLocation := "", newTradeOther := "", gamePID := ""
 			}
 			else {
+				; Check existing tabs for same buyer, and add to the "Other:" slot
+				tradesInfos := Gui_Trades_Manage_Trades("GET_ALL")
+				Loop % tradesInfos.Max_Index {
+					if (whispName = tradesInfos[A_Index "_Buyer"]) {
+						otherContent := tradesInfos[A_Index "_Other"]
+						if (otherContent != "-" && otherContent != "`n") { ; Already contains text, include previous text
+							if otherContent not contains (Hover to see all messages) ; Only one message in the Other slot.
+							{
+								StringReplace, otherContent, otherContent,% "`n",% "",1 ; Remove blank lines
+								otherContent := "[" tradesInfos[A_Index "_Time"] "] " otherContent ; Add timestamp
+							}
+							StringReplace, otherContent, otherContent,% "(Hover to see all messages)`n",% "",1
+							otherText := "(Hover to see all messages)`n" otherContent "`n[" A_Hour ":" A_Min "] " whispMsg
+						}
+						else { ; Does not contains text, do not include previous text
+							otherText := "(Hover to see all messages)`n" "[" A_Hour ":" A_Min "] " whispMsg
+						}
+						setInfos := { OTHER:otherText, TabID:A_Index }
+						Gui_Trades_Set_Trades_Infos(setInfos)
+					}
+				}
+
+				if !WinActive("ahk_pid " gamePID) {
+					if ( ProgramSettings.Whisper_Tray ) {
+						Show_Tray_Notification("Whisper from " whispName, whispMsg)
+					}
+
+					if ( ProgramSettings.Whisper_Flash ) {
+						gameHwnd := WinExist("ahk_pid " gamePID)
+						DllCall("FlashWindow", UInt, gameHwnd, Int, 1)
+					}
+				}
+				
 				if ( ProgramSettings.Whisper_Toggle = 1 ) && FileExist(ProgramSettings.Whisper_Sound_Path) { ; Play the sound set for whispers
 					SoundPlay,% ProgramSettings.Whisper_Sound_Path
 				}
