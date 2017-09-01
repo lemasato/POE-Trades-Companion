@@ -1,9 +1,9 @@
 Orb Of Alchemy
 Orb Of Alteration
-Apprentice Cartographers Sextant
-Armourers Scrap
+Apprentice Cartographer's Sextant
+Armourer's Scrap
 Orb Of Augmentation
-Glassblowers Bauble
+Glassblower's Bauble
 Blessed Orb
 Blessing Of Chayula
 Blessing Of Esh
@@ -12,7 +12,7 @@ Blessing Of Uul-netol
 Blessing Of Xoph
 Orb Of Chance
 Chaos Orb
-Chayulas Breachstone
+Chayula's Breachstone
 Fragment Of The Chimera
 Cartographers Chisel
 Chromatic Orb
@@ -39,8 +39,8 @@ Deafening Essence Of Woe
 Deafening Essence Of Wrath
 Deafening Essence Of Zeal
 Divine Orb
-Sacrifice Of Dusk
-Ebers Key
+Sacrifice at Dusk
+Eber's Key
 Eshs Breachstone
 Essence Of Delirium
 Essence Of Horror
@@ -49,20 +49,20 @@ Essence Of Insanity
 Eternal Orb
 Exalted Orb
 Orb Of Fusing
-Gemcutters Prism
+Gemcutter's Prism
 Mortal Grief
 Mortal Hope
 Fragment Of The Hydra
 Mortal Ignorance
-Inyas Key
-Jewellers Orb
-Journeyman Cartographers Sextant
-Master Cartographers Sextant
-Sacrifice Of Midnight
+Inya's Key
+Jeweller's Orb
+Journeyman Cartographer's Sextant
+Master Cartographer's Sextant
+Sacrifice at Midnight
 Fragment Of The Minotaur
 Mirror Of Kalandra
 Mortal Set
-Sacrifice Of Noon
+Sacrifice at Noon
 Offering To The Goddess
 Pale Court Set
 Fragment Of The Phoenix
@@ -121,13 +121,13 @@ Splinter Of Tul
 Splinter Of Uul-netol
 Splinter Of Xoph
 Orb Of Transmutation
-Tuls Breachstone
-Uul-netols Breachstone
+Tul's Breachstone
+Uul-netol's Breachstone
 Vaal Orb
-Volkuurs Key
-Blacksmiths Whetstone
+Volkuur's Key
+Blacksmith's Whetstone
 Scroll Of Wisdom
-Xophs Breachstone
+Xoph's Breachstone
 Ancient Orb
 Ancient Shard
 Annulment Shard
@@ -145,3 +145,4 @@ Orb of Binding
 Orb of Horizon
 Regal Shard
 Divine Vessel
+Yriel's Key
