@@ -7752,10 +7752,10 @@ StackClick() {
 
 	; Using these because ^{LButton} was finicky, sometimes including shifts or not executing properly
 	CtrlClick:
-		SendInput {Shift Up}{Ctrl Down}{LButton Down}{LButton Up}{Ctrl Up}
+		SendInput {Ctrl Down}{Shift Up}{LButton Down}{LButton Up}{Ctrl Up}
 		return
 	ShiftClickPlus:
-		SendInput {Ctrl Up}{Shift Down}{LButton Down}{LButton Up}{Shift Up}
+		SendInput {Shift Down}{Ctrl Up}{LButton Down}{LButton Up}{Shift Up}
 		SendInput, %amount%{Enter}
 		return
 	Finished: 
@@ -7770,5 +7770,5 @@ StackClick() {
 #Include Class_ImageButton.ahk  
 #Include BetaFuncs.ahk
 
-#IfWinActive ahk_class POEWindowClass
+#IfWinActive ahk_group POEGame
 ^+LButton::StackClick()
