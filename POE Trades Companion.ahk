@@ -7716,9 +7716,9 @@ StackClick() {
 	tabInfo := Gui_Trades_Get_Trades_Infos(tabId)
 	item := Gui_Stats_Get_Currency_Name(tabInfo.item)
 
-	if (item.name && RegExMatch(clip, "i)(?:" item.name ")[\s\S]*(?:Stack Size: )(\d+)\/(\d+)", match)) {
-		available := match1
-		stackSize := match2
+	if (item.name && RegExMatch(clip, "i)(?:" item.name ")[\s\S]*(?:Stack Size: )(\d+(?:,\d+)*)\/(\d+(?:,\d+)*)", match)) {
+		available := RegexReplace(match1, ",")
+		stackSize := RegexReplace(match2, ",")
 		; if available amount hasn't changed, it's likely the previous click hasn't gone through yet
 		if (available = lastAvailable) {
 			return
@@ -7762,6 +7762,37 @@ StackClick() {
 		SoundPlay,% ProgramSettings.Whisper_Sound_Path
 		lastAvailable := 0
 		return
+}
+
+ShiftClickPlus() {
+	global TradesGUI_Values, ProgramSettings
+
+	clipboard = ; Clear CLipboard
+	SendInput {Shift Up}^c
+
+	; wait for clipboard to be populated and do nothing if it fails
+	ClipWait, .2
+	if (ErrorLevel) {
+		return
+	}
+	clip := clipboard
+
+	tabId := TradesGUI_Values.Active_Tab
+	tabInfo := Gui_Trades_Get_Trades_Infos(tabId)
+	item := Gui_Stats_Get_Currency_Name(tabInfo.item)
+
+	if (item.name && RegExMatch(clip, "i)(?:" item.name ")[\s\S]*(?:Stack Size: )(\d+(?:,\d+)*)\/(\d+(?:,\d+)*)", match)) {
+		available := RegexReplace(match1, ",")
+		stackSize := RegexReplace(match2, ",")
+
+		;amount = remainder of required/stacksize
+		RegExMatch(tabinfo.item, "\d+", required)
+		amount := Mod(required, stackSize) 
+
+		SendInput {Shift Down}{Ctrl Up}{LButton Down}{LButton Up}{Shift Up}
+		SendInput, %amount%{Enter}
+	}
+	return
 }
 
 #Include %A_ScriptDir%/Resources/AHK/
