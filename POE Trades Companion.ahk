@@ -7716,9 +7716,9 @@ StackClick() {
 	tabInfo := Gui_Trades_Get_Trades_Infos(tabId)
 	item := Gui_Stats_Get_Currency_Name(tabInfo.item)
 
-	if (item.name && RegExMatch(clip, "i)(?:" item.name ")[\s\S]*(?:Stack Size: )(\d+(?:,\d+)*)\/(\d+(?:,\d+)*)", match)) {
-		available := RegexReplace(match1, ",")
-		stackSize := RegexReplace(match2, ",")
+	if (item.name && RegExMatch(clip, "i)(?:" item.name ")[\s\S]*: (\d+(?:[,.]\d+)*)\/(\d+(?:[,.]\d+)*)", match)) {
+		available := RegexReplace(match1, "[,.]")
+		stackSize := RegexReplace(match2, "[,.]")
 		; if available amount hasn't changed, it's likely the previous click hasn't gone through yet
 		if (available = lastAvailable) {
 			return
@@ -7752,10 +7752,10 @@ StackClick() {
 
 	; Using these because ^{LButton} was finicky, sometimes including shifts or not executing properly
 	CtrlClick:
-		SendInput {Ctrl Down}{Shift Up}{LButton Down}{LButton Up}{Ctrl Up}
+		SendInput {Ctrl Down}{Shift Up}{LButton Up}{Ctrl Up}
 		return
 	ShiftClickPlus:
-		SendInput {Shift Down}{Ctrl Up}{LButton Down}{LButton Up}{Shift Up}
+		SendInput {Shift Down}{Ctrl Up}{LButton Up}{Shift Up}
 		SendInput, %amount%{Enter}
 		return
 	Finished: 
@@ -7781,15 +7781,15 @@ ShiftClickPlus() {
 	tabInfo := Gui_Trades_Get_Trades_Infos(tabId)
 	item := Gui_Stats_Get_Currency_Name(tabInfo.item)
 
-	if (item.name && RegExMatch(clip, "i)(?:" item.name ")[\s\S]*(?:Stack Size: )(\d+(?:,\d+)*)\/(\d+(?:,\d+)*)", match)) {
-		available := RegexReplace(match1, ",")
-		stackSize := RegexReplace(match2, ",")
+	if (item.name && RegExMatch(clip, "i)(?:" item.name ")[\s\S]*: (\d+(?:[,.]\d+)*)\/(\d+(?:[,.]\d+)*)", match)) {
+		available := RegexReplace(match1, "[,.]")
+		stackSize := RegexReplace(match2, "[,.]")
 
 		;amount = remainder of required/stacksize
 		RegExMatch(tabinfo.item, "\d+", required)
 		amount := Mod(required, stackSize) 
 
-		SendInput {Shift Down}{Ctrl Up}{LButton Down}{LButton Up}{Shift Up}
+		SendInput {Shift Down}{Ctrl Up}{LButton Up}{Shift Up}
 		SendInput, %amount%{Enter}
 	}
 	return
