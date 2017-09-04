@@ -7724,7 +7724,7 @@ StackClick() {
 			return
 		}
 		lastAvailable := available
-
+		
 		RegExMatch(tabinfo.item, "\d+", required) ; get required amount
 		withdrawn := tabInfo.withdrawTally
 		amount := (available >= stackSize) ? stackSize : available
@@ -7745,6 +7745,11 @@ StackClick() {
 			Gosub Finished
 		}
 		GUI_Trades_Inc_WithdrawTally(tabId, amount)
+		; If transfering individual stacks, add a 250ms delay to account for lag and remove lastAvailable. Otherwise next click will do nothing
+		if (available == stackSize) {
+			sleep 250
+			lastAvailable := 0
+		}
 	} else {
 		Gosub CtrlClick
 	}
@@ -7752,11 +7757,28 @@ StackClick() {
 
 	; Using these because ^{LButton} was finicky, sometimes including shifts or not executing properly
 	CtrlClick:
-		SendInput {Ctrl Down}{Shift Up}{LButton Up}{Ctrl Up}
+		Gosub GetKeyStates
+		SendInput {Ctrl Down}{Shift Up}{Click}{Ctrl Up}
+		Gosub ReturnKeyStates
 		return
 	ShiftClickPlus:
-		SendInput {Shift Down}{Ctrl Up}{LButton Up}{Shift Up}
+		Gosub GetKeyStates
+		SendInput {Shift Down}{Ctrl Up}{Click}{Shift Up}
 		SendInput, %amount%{Enter}
+		Gosub ReturnKeyStates
+		return
+	GetKeyStates:
+		shiftState := (GetKeyState("Shift"))?("Down"):("Up")
+		ctrlState := (GetKeyState("Shift"))?("Down"):("Up")
+		Hotkey, *Shift, DoNothing, On
+		Hotkey, *Ctrl, DoNothing, On
+		sleep 10
+		return
+	ReturnKeyStates:
+		sleep 10
+		Hotkey, *Shift, DoNothing, Off
+		Hotkey, *Ctrl, DoNothing, Off
+		Send {Shift %shiftState%}{Ctrl %ctrlState%} ; Restore ctrl/shift state
 		return
 	Finished: 
 		SoundPlay,% ProgramSettings.Whisper_Sound_Path
