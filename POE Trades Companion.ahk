@@ -1,4 +1,4 @@
-/*
+﻿/*
 *	*	*	*	*	*	*	*	*	*	*	*	*	*	*	*	*	*	*	*	*	*	*	*	*	*	*	*	*	*	*	*	*	*	*	*	*	*	*	*	*
 *					POE Trades Companion																															*
 *					See all the information about the trade request upon receiving a poe.trade whisper															*
@@ -7719,16 +7719,23 @@ StackClick() {
 	if (item.name && RegExMatch(clip, "i)(?:" item.name ")[\s\S]*: (\d+(?:[,.]\d+)*)\/(\d+(?:[,.]\d+)*)", match)) {
 		available := RegexReplace(match1, "[,.]")
 		stackSize := RegexReplace(match2, "[,.]")
-		; if available amount hasn't changed, it's likely the previous click hasn't gone through yet
-		if (available = lastAvailable) {
-			return
-		}
+
 		RegExMatch(tabinfo.item, "\d+", required) ; get required amount
 		withdrawn := tabInfo.withdrawTally
 		amount := (available >= stackSize) ? stackSize : available
 
+		; if available amount hasn't changed, it's likely the previous click hasn't gone through yet
+		if (available = lastAvailable) {
+			tipInfo := "Stack size hasn't changed since your last click. `n"
+			tipInfo .= "This is normaly caused by latency issues but `n"
+			tipInfo .= "could mean the macro has run into problems"
+			Gosub showToolTip 
+			return
+		}
 		; Don't do anything if we've already withdrawn all we need
 		if ((required - withdrawn) <= 0) {
+			tipInfo := "You've already withdrawn the required amount."
+			Gosub showToolTip
 			return
 		}
 
@@ -7743,6 +7750,8 @@ StackClick() {
 			Gosub Finished
 		}
 		GUI_Trades_Inc_WithdrawTally(tabId, amount)
+		withdrawn := withdrawn + amount ;update for tooltip
+		Gosub showToolTip
 		; If transfering individual stacks, add a 250ms delay to account for lag and remove lastAvailable. Otherwise next click will do nothing
 		if (available == stackSize) {
 			sleep 250
@@ -7783,6 +7792,18 @@ StackClick() {
 	Finished: 
 		SoundPlay,% ProgramSettings.Whisper_Sound_Path
 		lastAvailable := 0
+		tipInfo := "Finished. You should have withdrawn the required amount."
+		return
+	ShowToolTip:
+		tip := "POE Trades Companion `n"
+		tip .= "===============================`n"
+		tip .= item.Name "`n"
+		tip .= "Required: " required " | Withdrawn: "  withdrawn "`n"
+		if (tipInfo) {
+			tip .= "===============================`n"
+			tip .= tipInfo
+		}
+		mouseTooltip(tip)
 		return
 }
 
@@ -7815,6 +7836,28 @@ ShiftClickPlus() {
 		SendInput, %amount%{Enter}
 	}
 	return
+}
+
+mouseTooltip(tip, posX = 0, posY = 0) {
+	static mouseX, mouseY
+	MouseGetPos, mouseX, mouseY
+	posX := (posX) ? posX : mouseX +20 ;So the tooltip isnt coverd by your mouse
+	posY := (posY) ? posY : mouseY
+
+	ToolTip ; Removes the old tooltip, otherwise I get underlined fonts for some reason
+	ToolTip, % tip, posX, posY
+	SetTimer, RemoveTT, 100
+	return
+
+	RemoveTT:
+		MouseGetPos, currentX, currentY
+		movedX := (currentX - mouseX) ** 2 > 100
+		movedY := (currentY - mouseY) ** 2 > 100
+		if (movedX || movedY)	{
+			SetTimer, RemoveTT, Off
+			ToolTip
+		}
+		return
 }
 
 #Include %A_ScriptDir%/Resources/AHK/
