@@ -7723,8 +7723,6 @@ StackClick() {
 		if (available = lastAvailable) {
 			return
 		}
-		lastAvailable := available
-		
 		RegExMatch(tabinfo.item, "\d+", required) ; get required amount
 		withdrawn := tabInfo.withdrawTally
 		amount := (available >= stackSize) ? stackSize : available
@@ -7749,6 +7747,8 @@ StackClick() {
 		if (available == stackSize) {
 			sleep 250
 			lastAvailable := 0
+		} else {
+			lastAvailable := available
 		}
 	} else {
 		Gosub CtrlClick
@@ -7758,12 +7758,12 @@ StackClick() {
 	; Using these because ^{LButton} was finicky, sometimes including shifts or not executing properly
 	CtrlClick:
 		Gosub GetKeyStates
-		SendInput {Ctrl Down}{Shift Up}{Click}{Ctrl Up}
+		SendInput {Ctrl Down}{Shift Up}{Lbutton Up}{Ctrl Up}
 		Gosub ReturnKeyStates
 		return
 	ShiftClickPlus:
 		Gosub GetKeyStates
-		SendInput {Shift Down}{Ctrl Up}{Click}{Shift Up}
+		SendInput {Shift Down}{Ctrl Up}{LButton Up}{Shift Up}
 		SendInput, %amount%{Enter}
 		Gosub ReturnKeyStates
 		return
