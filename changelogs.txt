@@ -1,5 +1,29 @@
 \\
---1.12.BETA_9--
+--1.12.BETA_11--
+Added:
+- Minimize and Maximize icons are now used instead of the "MINIMIZE" text, on the Trades GUI.
+- The tool now makes use of the GitHub API to retrieve the latest stable and beta versions.
+
+Improvements:
+- Improved the reliability of the function used to send messages.
+- Overall (minor) improvements to the Path of Exile Skin.
+
+Changes:
+- The uncompilled script now uses the icon file.
+- The Trades GUI title is now centered.
+- Removed "- Queued Trades: xx" when no trades are on queue.
+- The White Skin "Title (Active)" color has been changed to white (from black).
+
+Fix:
+- When unable to reach api.pathofexile.com, we normally use pre-included league names. This would not work correctly.
+- Receiving a trading whisper would temporarily pause the function used to send in-game messages.
+- Possible fix: The tool could "pause" during sending messages under specific circonstancies.
+//
+\\
+--1.12.BETA_9/BETA_10--
+BETA_10: Removed caps from version.txt and changelogs.txt file name.
+Note to self: Don't use them. It messes up.
+
 Added:
 - Send Message + Minimize action. This allows you to send a message, then put the GUI into its minimized state.
 

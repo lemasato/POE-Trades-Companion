@@ -3,10 +3,11 @@
 		"use_chat_logs" : false,
 		"show_tray_menu" : false,
 		"simulate_new_trade_while_tab_close": false,
-
+		
 		"no_online_check" : false,
 		"no_admin_splash" : false,
 		"no_prerender" : false,
+		"no_assets_extracting" : false,
 
 		"open_settings" : false,
 		"open_about" : false,

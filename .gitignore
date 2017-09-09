@@ -1,11 +1,12 @@
 # Testing tools and ideas that cannot work.
-/_BETA/*
-/_Scrapped_Ideas/*
+/_DebugTools/*
+/_ScrappedIdeas/*
 /_Testings/*
-ENABLE_DEBUG.txt
-File_Install.ahk
 Verpatch.*
 *_Old*
+
+_Convert_Release.ahk
+File_Install.ahk
 
 # Resources source files
 *.sfd
