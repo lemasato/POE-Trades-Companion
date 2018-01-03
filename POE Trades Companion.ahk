@@ -67,7 +67,7 @@ Start_Script() {
 	MyDocuments 						:= (RunParameters.MyDocuments)?(RunParameters.MyDocuments):(A_MyDocuments)
 
 	ProgramValues.Name 					:= "POE Trades Companion"
-	ProgramValues.Version 				:= "1.12"
+	ProgramValues.Version 				:= "1.12.BETA_15"
 	ProgramValues.Github_User 			:= "lemasato"
 	ProgramValues.GitHub_Repo 			:= "POE-Trades-Companion"
 
@@ -2036,16 +2036,41 @@ Gui_Trades_Clipboard_Item_Func(tabID="NONE") {
 
 	tabInfos := Gui_Trades_Get_Trades_Infos(tabID)
 	item := tabInfos.Item
-	if RegExMatch(item, "(.*?) \(Lvl:(.*?) \/ Qual:(.*?)%\)", itemPat) {
-		clipContent := (itemPat1 && itemPat2 && itemPat3)?("""" itemPat1 """" . A_Space . """Level: " itemPat2 """" . A_Space . """Quality: +" itemPat3 "%""") ; Lvl and Qual
-				  	  :(itemPat1 && itemPat2 && !itemPat3)?("""" itemPat1 """" . A_Space . """Level: " itemPat2 """") ; Lvl but no qual
-				  	  :(item) ; Neither found
+	if RegExMatch(item, "O)(.*?) \(Lvl:(.*?) \/ Qual:(.*?)%\)", itemPat) {
+		gemName := itemPat.1, gemLevel := itemPat.2, gemQual := itemPat.3
 	}
 	else if RegExMatch(item, "O)(.*?) \(T(.*?)\)", itemPat) {
-		clipContent := """" itemPat.1 """" " tier:" itemPat.2
+		mapName := itemPat.1, mapTier := itemPat.2
 	}
 
-	clipContent := (clipContent)?(clipContent):(item)
+	if (gemName) {
+		Gui_Trades_Clipboard_Item_Func_GemString:
+		searchGemStr := """" gemName """", searchLvlStr := """l: " gemLevel """", searchQualStr := """y: +" gemQual "%"""
+		searchString := searchGemStr
+		searchString .= (gemLevel && !gemQual)?(" " searchLvlStr):(gemLevel && gemQual)?(" " searchLvlStr " " searchQualStr):("")
+
+		searchStrLen := StrLen(searchString)
+		if (searchStrLen > 50) {
+			charsToRemove := searchStrLen-50
+			StringTrimRight, gemName, gemName, %charsToRemove%
+			GoTo Gui_Trades_Clipboard_Item_Func_GemString
+		}
+	}
+	else if (mapName) {
+		Gui_Trades_Clipboard_Item_Func_MapString:
+		searchMapStr := """" mapName """", searchTierStr := "tier:" mapTier
+		searchString := searchMapStr
+		searchString .= (mapTier)?(" " searchTierStr):("")
+
+		searchStrLen := StrLen(searchString)
+		if (searchStrLen > 50) {
+			charsToRemove := searchStrLen-50
+			StringTrimRight, mapName, mapName, %charsToRemove%
+			GoTo Gui_Trades_Clipboard_Item_Func_MapString
+		}
+	}
+
+	clipContent := (searchString)?(searchString):(item)
 	if (clipContent) {
 		Set_Clipboard(clipContent)
 	}
@@ -6048,11 +6073,7 @@ ShellMessage(wParam,lParam) {
 		WinGet, winID, ID, ahk_id %lParam%
 		if ( ProgramSettings.Show_Mode = "InGame" ) {
 			if ( TradesGUI_Values.Width ) { ; TradesGUI exists
-				if POEGameList contains %winEXE%
-				{
-					Gui, Trades:Show, NoActivate
-				}
-				else if (winID = GUISettingsHandler ) { 
+				if ( winEXE && IsContaining(POEGameList, winEXE) ) || ( (winID && GUISettingsHandler) && (winID = GUISettingsHandler) ) {
 					Gui, Trades:Show, NoActivate
 				}
 				else {
@@ -8154,6 +8175,16 @@ Set_Clipboard(str) {
 		Tray_Notifications_Show(ProgramValues.Name, "Unable to clipboard the following content: " str
 			.	"`nThis may be due to an external clipboard manager creating conflict.")
 	}
+}
+
+IsIn(_string, _list) {
+	if _string in %_list%
+		return True
+}
+
+IsContaining(_string, _keyword) {
+	if _string contains %_keyword%
+		return True
 }
 
 #Include %A_ScriptDir%/Resources/AHK/
