@@ -26,7 +26,7 @@
 	}
 	if (!currencyFullName && currencyWithoutS) { ; Couldn't retrieve full name, and currency is possibly plural
 		if IsIn(currencyWithoutS, PROGRAM.DATA.CURRENCY_LIST) ; Currency is in list, was most likely plural
-		{ 
+		{
 			currencyFullName := currencyWithoutS
 			isCurrencyListed := True
 		}
@@ -171,7 +171,7 @@ Replace_TradeVariables(string) {
 	string := StrReplace(string, "`%item`%", tabContent.Item)
 	string := StrReplace(string, "`%itemName`%", tabContent.Item)
 	string := StrReplace(string, "`%price`%", tabContent.Price)
-	string := StrReplace(string, "`%itemPrice`%", tabContent.Item)
+	string := StrReplace(string, "`%itemPrice`%", tabContent.Price)
 
 	string := StrReplace(string, "`%lastWhisper`%", GuiTrades.Last_Whisper_Name)
 
