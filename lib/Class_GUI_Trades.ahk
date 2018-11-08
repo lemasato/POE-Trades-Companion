@@ -183,11 +183,11 @@
 		Gui.Color("Trades", "White")
 		Gui.Font("Trades", settings_fontName, settings_fontSize, settings_fontQual)
 
-			; = = TAB CTRL = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+		; = = TAB CTRL = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 		Gui.Add("Trades", "Tab2", "x0 y0 w0 h0 hwndhTab_AllTabs Choose1")
 		Gui, Trades:Tab
 
-			; = = BORDERS = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+		; = = BORDERS = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 		bordersPositions := [{Position:"Top", X:0, Y:0, W:guiFullWidth, H:borderSize}, {Position:"Left", X:0, Y:0, W:borderSize, H:guiFullHeight} ; Top and Left
 							,{Position:"Bottom", X:0, Y:guiFullHeight-borderSize, W:guiFullWidth, H:borderSize}, {Position:"Right", X:guiFullWidth-borderSize, Y:0, W:borderSize, H:guiFullHeight} ; Bottom and Right
 							,{Position:"BottomMinimized", X:0, Y:guiMinimizedHeight-borderSize, W:guiFullWidth, H:borderSize}] ; Bottom when minimized
@@ -198,7 +198,7 @@
 				GuiControl, Trades:Hide,% GuiTrades_Controls["hPROGRESS_Border" bordersPositions[A_index]["Position"]]
 		}
 
-			; = = BACKGROUND = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+		; = = BACKGROUND = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 		Gui.Add("Trades", "Picture", "x" BackgroundImg_X " y" BackgroundImg_Y " hwndhIMG_Background BackgroundTrans", SKIN.Assets.Misc.Background)
 		TilePicture("Trades", GuiTrades_Controls.hIMG_Background, BackgroundImg_W, BackgroundImg_H) ; Fill the background
 
@@ -213,7 +213,6 @@
 		; GuiControl, Trades:Move,% GuiTrades_Controls.hTEXT_Title,% "y" Ceil( titleCoords.Y+(titleCoords.H/2) ) ; Center on Y based on text H
 
 		Gui.Add("Trades", "Text", "x" Header_X " y" Header_Y " w" Header_W " h" Header_H " hwndhTXT_HeaderGhost BackgroundTrans", "") ; Empty text ctrl to allow moving the gui by dragging the title bar
-
 
 
 		__f := GUI_Trades.OnGuiMove.bind(GUI_Trades, GuiTrades.Handle)
@@ -262,7 +261,7 @@
 		__f := GUI_Trades.RemoveTab.bind(GUI_Trades, tabName:="", massRemove:=False)
 		GuiControl, Trades:+g,% GuiTrades_Controls["hBTN_CloseTab"],% __f
 
-			; = = TABS CONTENT = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+		; = = TABS CONTENT = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 		Loop % maxTabsToRender {
 			GuiControl, Trades:,% GuiTrades_Controls.hTab_AllTabs,% A_Index "|"
 			Gui, Trades:Tab,% A_Index,,Exact
@@ -277,7 +276,7 @@
 			Gui.Add("Trades", "Text", "x" TradeInfos_X " y" TradeInfos_Y " w" TradeInfos_W " hwndhTEXT_TradeInfos" A_Index " R5 BackgroundTrans -Wrap c" SKIN.Settings.COLORS.Trade_Info_2, "Buyer:`nItem:`nPrice:`nStash:`nOther:") ; Trade infos			
 		}
 
-			; = = SPECIAL BUTTONS = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+		; = = SPECIAL BUTTONS = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 		Gui, Trades:Tab
 		specialBtnsChar := {Clipboard:"0", Whisper:"1", Invite:"2", Trade:"3", Kick:"4"}
 		if (btnRowsCount.Special > 0) {
@@ -295,7 +294,7 @@
 		GuiTrades.SpecialButton1_X := specialBtn1Coords.X, GuiTrades.SpecialButton2_X := specialBtn2Coords.X
 		GuiTrades.SpecialButton3_X := specialBtn3Coords.X, GuiTrades.SpecialButton4_X := specialBtn4Coords.X, GuiTrades.SpecialButton5_X := specialBtn5Coords.X
 
-			; = = CUSTOM BUTTONS = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+		; = = CUSTOM BUTTONS = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 		Gui, Trades:Tab
 
 		if (btnRowsCount.Custom > 0) {
@@ -315,7 +314,7 @@
 		GuiTrades.CustomButtonLeft_X := CustomButtonLeft_X,	GuiTrades.CustomButtonMiddle_X := CustomButtonMiddle_X,	GuiTrades.CustomButtonRight_X := CustomButtonRight_X
 		GuiTrades.CustomButtonRow1_Y := customBtn1Coords.Y,	GuiTrades.CustomButtonRow2_Y := customBtn4Coords.Y,	GuiTrades.CustomButtonRow3_Y := customBtn7Coords.Y
 
-			; = = ERROR TEXT MSG = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+		; = = ERROR TEXT MSG = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 		Gui, Trades:Tab
 		GuiControl, Trades:,% GuiTrades_Controls.hTab_AllTabs,% "No Trades On Queue|"
 		Gui, Trades:Tab,% "No Trades On Queue",,Exact
@@ -325,12 +324,12 @@
 		Gui, Trades:Tab,% "No Game Instance",,Exact
 		Gui.Add("Trades", "Text", "x" InfoMsg_X " y" InfoMsg_Y " w" InfosMsg_W " hwndhTEXT_InfoMsgNoGameInstance Center BackgroundTrans c" SKIN.Settings.COLORS.Trade_Info_1, InfoMsg_NoGameInstanceMsg)
 
-			; = = MINIMIZED BORDER = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+		; = = MINIMIZED BORDER = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 		; We have to add it now, otherwise other controls will overlap it 
 		Gui, Trades:Tab
 		Gui.Add("Trades", "Progress", "x" bordersPositions[5]["X"] " y" bordersPositions[5]["Y"] " w" bordersPositions[5]["W"] " h" bordersPositions[5]["H"] " hwndhPROGRESS_Border" bordersPositions[5]["Position"] " Hidden Background" SKIN.Settings.COLORS.Border)
 
-			; = = SHOW THE GUI = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+		; = = SHOW THE GUI = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 		Gui, Trades:Tab
 		GUI_Trades.SetActiveTab("No Trades On Queue")
 
@@ -374,7 +373,7 @@
 			GuiControlGet, ctrlName, Trades:,% ctrlHwnd
 
 			Gui_Trades.ContextMenu(ctrlHwnd, ctrlName)
-		return
+		Return
 	}
 
 	ContextMenu(CtrlHwnd, CtrlName) {
@@ -900,7 +899,7 @@
 
 	RemoveTab(tabName="", massRemove=False) {
 		global PROGRAM, SKIN
-		global GuiTrades, GuiTrades_Controls
+		global GuiTrades, GuiTrades_Controls, GuiTradesMinimized_Controls
 		tabsLimit := GuiTrades.Tabs_Limit
 		tabsCount := GuiTrades.Tabs_Count
 		maxTabsPerRow := GuiTrades.Max_Tabs_Per_Row
@@ -957,7 +956,9 @@
 
 		if (GuiTrades.Tabs_Count = 0) {
 			GuiControl,Trades:,% GuiTrades_Controls["hTEXT_Title"],% "POE Trades Companion"
+			GuiControl,TradesMinimized:,% GuiTradesMinimized_Controls["hTEXT_Title"],% "(0)"
 			GuiControl,% "Trades: +c" SKIN.Settings.COLORS.Title_No_Trades,% GuiTrades_Controls["hTEXT_Title"]
+			GuiControl,% "TradesMinimized: +c" SKIN.Settings.COLORS.Title_No_Trades,% GuiTradesMinimized_Controls["hTEXT_Title"]
 			if (PROGRAM.SETTINGS.SETTINGS_MAIN.AllowClicksToPassThroughWhileInactive = "True")
 				Gui_Trades.Enable_ClickThrough()
 			if (PROGRAM.SETTINGS.SETTINGS_MAIN.AutoMinimizeOnAllTabsClosed = "True")
@@ -967,6 +968,7 @@
 		}
 		else {
 			GuiControl,Trades:,% GuiTrades_Controls["hTEXT_Title"],% "POE Trades Companion (" GuiTrades.Tabs_Count ")"
+			GuiControl,Trades:,% GuiTradesMinimized_Controls["hTEXT_Title"],% "(" GuiTrades.Tabs_Count ")"
 		}
 	}
 
@@ -1037,7 +1039,7 @@
 
 	PushNewTab(tabInfos) {
 		global PROGRAM, SKIN
-		global GuiTrades, GuiTrades_Controls
+		global GuiTrades, GuiTrades_Controls, GuiTradesMinimized_Controls
 		tabsLimit := GuiTrades.Tabs_Limit
 		tabsCount := GuiTrades.Tabs_Count
 		maxTabsPerRow := GuiTrades.Max_Tabs_Per_Row
@@ -1084,7 +1086,9 @@
 
 		if (GuiTrades.Tabs_Count > 0) {
 			GuiControl,Trades:,% GuiTrades_Controls["hTEXT_Title"],% "POE Trades Companion (" GuiTrades.Tabs_Count ")"
+			GuiControl,TradesMinimized:,% GuiTradesMinimized_Controls["hTEXT_Title"],% "(" GuiTrades.Tabs_Count ")"
 			GuiControl,% "Trades: +c" SKIN.Settings.COLORS.Title_Trades,% GuiTrades_Controls["hTEXT_Title"]
+			GuiControl,% "TradesMinimized: +c" SKIN.Settings.COLORS.Title_Trades,% GuiTradesMinimized_Controls["hTEXT_Title"]
 			Gui_Trades.Disable_ClickThrough()
 			Gui_Trades.Redraw()
 		}
@@ -1659,7 +1663,16 @@
 		GuiTrades.Active_Tab := tabName
 	}
 
+	
 	Maximize(skipAnimation="") {
+		global GuiTrades
+
+		if !(GuiTrades.Is_Created)
+			return
+		
+		GUI_TradesMinimized.Maximize()
+
+		/* ; Old code, changing gui size
 		global GuiTrades, GuiTrades_Controls
 		global PROGRAM
 
@@ -1680,9 +1693,27 @@
 		GuiTrades.Is_Maximized := True
 		GuiTrades.Is_Minimized := False
 		; GUI_Trades.ToggleTabSpecificAssets("On")
+		*/
 	}
 
 	Minimize(skipAnimation="") {
+		global GuiTrades
+
+		if !(GuiTrades.Is_Created)
+			return
+
+		GuiTrades.Is_Maximized := False
+		GuiTrades.Is_Minimized := True
+
+		hiddenWin := A_DetectHiddenWindows
+		DetectHiddenWindows, On
+		GUI_TradesMinimized.Show()
+		DetectHiddenWindows, %hiddenWin%
+
+		if ( GUI_ItemGrid.Exists() )
+			GUI_ItemGrid.Hide()
+
+		/* ; Old code, changing gui size
 		global GuiTrades, GuiTrades_Controls
 		global PROGRAM
 
@@ -1704,6 +1735,7 @@
 		GuiTrades.Is_Minimized := True
 		; GUI_Trades.ToggleTabSpecificAssets("Off")
 		; TO_DO Possibly hide tabs to avoid overlap on border?
+		*/
 	}
 
 	OnGuiMove(GuiHwnd) {
@@ -1729,6 +1761,8 @@
 			transValue := (255/100)*transPercent
 
 		Gui, Trades:+LastFound
+		WinSet, Transparent,% transValue
+		Gui, TradesMinimized:+LastFound
 		WinSet, Transparent,% transValue
 	}
 
@@ -1758,30 +1792,45 @@
 		global PROGRAM, GuiTrades
 		Gui, Trades: +LastFound
 		WinSet, ExStyle, +0x20
+		Gui, TradesMinimized: +LastFound
+		WinSet, ExStyle, +0x20
 	}
 
 	Disable_ClickThrough() {
 		global GuiTrades
 		Gui, Trades: +LastFound
 		WinSet, ExStyle, -0x20
+		Gui, TradesMinimized: +LastFound
+		WinSet, ExStyle, -0x20
 	}
 
 	ResetPosition(dontWrite=False) {
-		global PROGRAM, GuiTrades
+		global PROGRAM, GuiTrades, GuiTradesMinimized
+
+		resDPI := PROGRAM.OS.RESOLUTION_DPI
+		iniFile := PROGRAM.INI_FILE
 
 		try {
-			Gui, Trades:Show,% "NoActivate x" Ceil(A_ScreenWidth - (GuiTrades.Width * PROGRAM.OS.RESOLUTION_DPI) ) " y0"
+			if (GuiTrades.Is_Minimized)
+				Gui, TradesMinimized:Show,% "NoActivate x" Ceil(A_ScreenWidth - (GuiTradesMinimized.Width * resDPI) ) " y0"
+			else Gui, Trades:Show,% "NoActivate x" Ceil(A_ScreenWidth - (GuiTrades.Width * resDPI) ) " y0"
+			
 			if !(dontWrite) {
-				INI.Set(PROGRAM.INI_FILE, "SETTINGS_MAIN", "Pos_X", Ceil(A_ScreenWidth - (GuiTrades.Width * PROGRAM.OS.RESOLUTION_DPI) ) )
-				INI.Set(PROGRAM.INI_FILE, "SETTINGS_MAIN", "Pos_Y", 0)
+				if (GuiTrades.Is_Minimized)
+					INI.Set(iniFile, "SETTINGS_MAIN", "Pos_X", Ceil(A_ScreenWidth - (GuiTradesMinimized.Width * resDPI) ) )
+				else INI.Set(iniFile, "SETTINGS_MAIN", "Pos_X", Ceil(A_ScreenWidth - (GuiTrades.Width * resDPI) ) )
+				INI.Set(iniFile, "SETTINGS_MAIN", "Pos_Y", 0)
 			}
 		}
 		catch e {
 			AppendToLogs(A_ThisFunc "(dontWrite=" dontWrite "): Failed to set GUI pos based on screen width. Setting to 0,0.")
-			Gui, Trades:Show,% "NoActivate x0 y0"
+			if (GuiTrades.Is_Minimized)
+				Gui, TradesMinimized:Show,% "NoActivate x0 y0"
+			else Gui, Trades:Show,% "NoActivate x0 y0"
+			
 			if !(dontWrite) {
-				INI.Set(PROGRAM.INI_FILE, "SETTINGS_MAIN", "Pos_X", 0)
-				INI.Set(PROGRAM.INI_FILE, "SETTINGS_MAIN", "Pos_Y", 0)
+				INI.Set(iniFile, "SETTINGS_MAIN", "Pos_X", 0)
+				INI.Set(iniFile, "SETTINGS_MAIN", "Pos_Y", 0)
 			}
 		}
 	}
@@ -1855,25 +1904,31 @@
 	}
 
 	DockMode_SetPosition() {
-		global GuiTrades
+		global GuiTrades, GuiTradesMinimized
 
 		WinGet, isMinMax, MinMax,% "ahk_id " GuiTrades.Docked_Window_Handle
 		isWinMinimized := isMinMax=-1?True:False
 
 		WinGetPos, dockedX, dockedY, dockedW, dockedH,% "ahk_id " GuiTrades.Docked_Window_Handle
 		WinGetPos, tradesX, tradesY, tradesW, tradesH,% "ahk_id " GuiTrades.Handle
+		WinGetPos, tradesMinX, tradesMinY, tradesMinW, tradesMinH,% "ahk_id " GuiTradesMinimized.Handle
 		
-		moveToX := (dockedX+dockedW)-GuiTrades.Width, moveToY := dockedY 
+		if (GuiTrades.Is_Minimized)
+			moveToX := (dockedX+dockedW)-GuiTradesMinimized.Width, moveToY := dockedY 
+		else moveToX := (dockedX+dockedW)-GuiTrades.Width, moveToY := dockedY 
 
-		if IsNum(dockedX) && (tradesX = moveToX && tradesY = moveToY)
+		if IsNum(dockedX) && ( (GuiTrades.Is_Minimized && tradesX = moveToX && tradesY = moveToY) || (GuiTrades.Is_Minimized && tradesMinX = moveToX && tradesMinY = moveToY) )
 			Return
 		else if !IsNum(dockedX) || (isWinMinimized) {
 			AppendToLogs(A_ThisFunc "(): Couldn't dock Trades GUI to game window. Resetting pos and cycling to next game window.")
 			GUI_Trades.ResetPosition(dontWrite:=True)
 			GUI_Trades.DockMode_Cycle(dontSetPos:=True)
 		}
-		else
-			WinMove,% "ahk_id " GuiTrades.Handle, ,% moveToX,% moveToY
+		else {
+			if (GuiTrades.Is_Minimized)
+				WinMove,% "ahk_id " GuiTradesMinimized.Handle, ,% moveToX,% moveToY
+			else WinMove,% "ahk_id " GuiTrades.Handle, ,% moveToX,% moveToY
+		}
 	}
 
 	SaveBackup() {

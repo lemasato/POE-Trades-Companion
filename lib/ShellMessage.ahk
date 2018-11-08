@@ -52,13 +52,21 @@ ShellMessage(wParam,lParam) {
 
 				if (activeWinExe && IsIn(activeWinExe, POEGameList)) || (activeWinHwnd && GuiSettings.Handle && activeWinHwnd = GuiSettings.Handle) {
 					Gui_Trades.SetTransparency_Automatic()
-					Gui, Trades:Show, NoActivate
+					if (GuiTrades.Is_Minimized)
+						Gui, TradesMinimized:Show, NoActivate
+					else Gui, Trades:Show, NoActivate
 				}
-				else
-					Gui, Trades:Show, NoActivate Hide
+				else {
+					if (GuiTrades.Is_Minimized)
+						Gui, TradesMinimized:Hide
+					else Gui, Trades:Hide
+				}
 			}
-			else
-				Gui, Trades:Show, NoActivate
+			else {
+				if (GuiTrades.Is_Minimized)
+					Gui, TradesMinimized:Show, NoActivate
+				else Gui, Trades:Show, NoActivate
+			}
 
 			if ( PROGRAM.SETTINGS.SETTINGS_MAIN.TradesGUI_Mode = "Dock")
 				GUI_Trades.DockMode_SetPosition()
@@ -72,6 +80,8 @@ ShellMessage(wParam,lParam) {
 			}
 
 			Gui, Trades:+LastFound
+			WinSet, AlwaysOnTop, On
+			Gui, TradesMinimized:+LastFound
 			WinSet, AlwaysOnTop, On
 		}
 

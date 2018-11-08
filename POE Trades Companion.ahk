@@ -261,6 +261,7 @@ Start_Script() {
 	EnableHotkeys()
 
 	ImageButton_TestDelay()
+	GUI_TradesMinimized.Create()
 	Gui_Trades.Create()
 	GUI_Trades.LoadBackup()
 
@@ -314,6 +315,7 @@ Return
 #Include Class_Gui_MyStats.ahk
 #Include Class_Gui_Settings.ahk
 #Include Class_Gui_Trades.ahk
+#Include Class_Gui_TradesMinimized.ahk
 #Include WM_Messages.ahk
 
 #Include AssetsExtract.ahk

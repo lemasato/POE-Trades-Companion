@@ -841,6 +841,7 @@ Class GUI_Settings {
 
 		Declare_SkinAssetsAndSettings()
 
+		Gui_TradesMinimized.Create()
 		Gui_Trades.RecreateGUI()
 	}
 
@@ -1563,6 +1564,7 @@ Class GUI_Settings {
 		TrayNotifications.Show("POE Trades Companion", "Recreating the Trades window with the new skin settings")
 		UpdateHotkeys()
 		Declare_SkinAssetsAndSettings()
+		Gui_TradesMinimized.Create()
 		Gui_Trades.RecreateGUI()
 	}
 
