@@ -6,8 +6,6 @@
 */
 	global PROGRAM
 
-	Return ; TO_DO re-enable if not related to virus #124
-
 	; Retrieving installed fonts count
 	RunWait,% PROGRAM.FONTS_FOLDER "/EnumFonts.vbs"
 	Loop, Read,% PROGRAM.FONTS_FOLDER "/EnumFontsResults.txt"

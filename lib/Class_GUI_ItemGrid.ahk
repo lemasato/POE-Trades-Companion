@@ -90,7 +90,7 @@ class GUI_ItemGrid {
         global GuiItemGridQuad, GuiItemGridQuad_Controls, GuiItemGridQuad_Submit
         global GuiItemGridTabName, GuiItemGridTabName_Controls, GuiItemGridTabName_Submit
 
-        resDPI := PROGRAM.OS.RESOLUTION_DPI
+        resDPI := Get_DpiFactor()
         winH := winH / resDPI ; os dpi fix
         winX := winX / resDPI ; os dpi fix
         winY := winY / resDPI ; os dpi fix

@@ -35,7 +35,7 @@
 		GUI_Trades.DisableHotkeys()
 
 		scaleMult := PROGRAM.SETTINGS.SETTINGS_CUSTOMIZATION_SKINS.ScalingPercentage / 100
-		resDPI := PROGRAM.OS.RESOLUTION_DPI 
+		resDPI := Get_DpiFactor() 
 
 		AppendToLogs("Trades GUI: Creating with max tabs """ _maxTabsToRender """.")
 
@@ -382,7 +382,8 @@
 
 		if (CtrlHwnd = GuiTrades_Controls.hBTN_CloseTab) {
 			try Menu, CloseTabMenu, DeleteAll
-			Menu, CloseTabMenu, Add, Close other tabs with same item, Gui_Trades_ContextMenu_CloseOtherTabsWithSameItem
+			Menu, CloseTabMenu, Add, Close other tabs for same item, Gui_Trades_ContextMenu_CloseOtherTabsWithSameItem
+			Menu, CloseTabMenu, Add, Close all tabs, Gui_Trades_ContextMenu_CloseAllTabs
 			Menu, CloseTabMenu, Show
 		}
 		else if IsIn(CtrlHwnd, GuiTrades_Controls.hTXT_HeaderGhost "," GuiTrades_Controls.hTEXT_Title) {
@@ -401,28 +402,45 @@
 			Tray_ToggleLockPosition()
 		Return
 
-		Gui_Trades_ContextMenu_CloseOtherTabsWithSameItem:
-			activeTabID := Gui_Trades.GetActiveTab()
-			activeTabInfos := Gui_Trades.GetTabContent(activeTabID)
-			tabsToLoop := GuiTrades.Tabs_Count
+		Gui_Trades_ContextMenu_CloseAllTabs:
+			GUI_Trades.CloseAllTabs()
+		return
 
-			; Parse every tab, from highest to lowest so when we close it, it doesn't affect tab order
-			Loop % GuiTrades.Tabs_Count {
-				loopedTab := tabsToLoop
-				if (loopedTab != activeTabID) {
-					tabInfos := Gui_Trades.GetTabContent(loopedTab)
-					if (tabInfos.Item = activeTabInfos.Item)
-					&& (tabInfos.Price = activeTabInfos.Price)
-					&& (tabInfos.Stash =  activeTabInfos.Stash) {
-						Gui_Trades.RemoveTab(loopedTab, massRemove:=True)
-						AppendToLogs(A_ThisLabel ": Removed tab " loopedTab)
-					}
-				}
-				tabsToLoop--
-			}
+		Gui_Trades_ContextMenu_CloseOtherTabsWithSameItem:
+			GUI_Trades.CloseOtherTabsForSameItem()
 		Return
 	}
 
+	CloseAllTabs() {
+		global GuiTrades
+
+		Loop % GuiTrades.Tabs_Count {
+			GUI_Trades.RemoveTab(A_LoopField, massRemove:=True)
+		}
+	}
+
+	CloseOtherTabsForSameItem() {
+		global GuiTrades
+		
+		activeTabID := Gui_Trades.GetActiveTab()
+		activeTabInfos := Gui_Trades.GetTabContent(activeTabID)
+		tabsToLoop := GuiTrades.Tabs_Count
+
+		; Parse every tab, from highest to lowest so when we close it, it doesn't affect tab order
+		Loop % GuiTrades.Tabs_Count {
+			loopedTab := tabsToLoop
+			if (loopedTab != activeTabID) {
+				tabInfos := Gui_Trades.GetTabContent(loopedTab)
+				if (tabInfos.Item = activeTabInfos.Item)
+				&& (tabInfos.Price = activeTabInfos.Price)
+				&& (tabInfos.Stash =  activeTabInfos.Stash) {
+					Gui_Trades.RemoveTab(loopedTab, massRemove:=True)
+					AppendToLogs(A_ThisLabel ": Removed tab " loopedTab)
+				}
+			}
+			tabsToLoop--
+		}
+	}
 
 	SetButtonsPositions() {
 		global PROGRAM
@@ -926,17 +944,17 @@
 			tabIndex := tabName+1
 			Loop % tabsCount-tabName {
 				tabContent := GUI_Trades.GetTabContent(tabIndex) ; Get tab content
-				GUI_Trades.SetTabContent(tabIndex-1, tabContent, False, False, True) ; Set tab content to previous tab
+				GUI_Trades.SetTabContent(tabIndex-1, tabContent, isNewlyPushed:=False, updateOnly:=False, replaceTab:=True) ; Set tab content to previous tab
 
 				tabIndex++
 			}
 			GUI_Trades.SetTabContent(tabIndex-1, "") ; Make last tab empty
+			GUI_Trades.SetTabStyleDefault(tabIndex-1)
 		}
 		else if (tabName = tabsCount) {
 			GUI_Trades.SetTabContent(tabName, "")
+			GUI_Trades.SetTabStyleDefault(tabName)
 		}
-
-		GUI_Trades.SetTabStyleDefault(tabName)
 
 		; Move tabs if needed
 		if (lastVisibleTab = tabsCount) {
@@ -1457,7 +1475,7 @@
 		return tabContent
 	}
 
-	SetTabContent(tabName, tabInfos="", isNewlyPushed=False, updateOnly=False, debug=False) {
+	SetTabContent(tabName, tabInfos="", isNewlyPushed=False, updateOnly=False, replaceTab=False) {
 		global GuiTrades_Controls
 
 		if !IsNum(tabName) {
@@ -1572,16 +1590,21 @@
 		; newTimeReceived := (currentTabContent.Time)?(currentTabContent.Time):(timeReceived)
 		newTimeReceived := updateOnly && !tabInfos.Time ? cTabCont.Time : tabInfos.Time
 
-		if (debug=True) ; RemoveTab
-		{
-			; MsgBox % "Tab: " tabName "`nC: " cTabCont.TradeVerify "`nT: " tabInfos.TradeVerify "`nN: " newTradeVerify
-		}
-
 		GuiControl, Trades:,% GuiTrades_Controls["hTEXT_TradeInfos" tabName],% visibleText
 		GuiControl, Trades:,% GuiTrades_Controls["hTEXT_HiddenTradeInfos" tabName],% invisibleText
 		GuiControl, Trades:,% GuiTrades_Controls["hTEXT_TradeReceivedTime" tabName],% newTimeReceived
 		if (updateOnly=False && newTradeVerify)
 			GUI_Trades.SetTabVerifyColor(tabName, newTradeVerify)
+
+		if IsNum(tabName) && (updateOnly=True || replaceTab=True) {
+			if (newTabIsInArea && (!cTabCont.IsInArea || replaceTab=True) )
+				GUI_Trades.SetTabStyleJoinedArea(tabName)
+			if (newTabHasNewMessage && (!cTabCont.HasNewMessage || replaceTab=True) )
+				GUI_Trades.SetTabStyleWhisperReceived(tabName)
+
+			else if (!newTabIsInArea && !newTabHasNewMessage)
+				GUI_Trades.SetTabStyleDefault(tabName)
+		}
 
 		if (visibleInfos.Other && isNewlyPushed) {
 			Gui_Trades.UpdateSlotContent(tabName, "Other", visibleInfos.Other)
@@ -1679,9 +1702,11 @@
 		global GuiTrades, GuiTrades_Controls
 		global PROGRAM
 
+		resDPI := Get_DpiFactor()
+
 		hiddenWin := A_DetectHiddenWindows
 		DetectHiddenWindows, On
-		WinMove,% "ahk_id " GuiTrades.Handle, , , , ,% GuiTrades.Height_Maximized * PROGRAM.OS.RESOLUTION_DPI ; change size first to avoid btn flicker
+		WinMove,% "ahk_id " GuiTrades.Handle, , , , ,% GuiTrades.Height_Maximized * resDPI ; change size first to avoid btn flicker
 		DetectHiddenWindows, %hiddenWin%
 
 		GuiControl, Trades:Show,% GuiTrades_Controls.hBTN_Minimize
@@ -1720,9 +1745,11 @@
 		global GuiTrades, GuiTrades_Controls
 		global PROGRAM
 
+		resDPI := Get_DpiFactor()
+
 		hiddenWin := A_DetectHiddenWindows
 		DetectHiddenWindows, On
-		WinMove,% "ahk_id " GuiTrades.Handle, , , , ,% GuiTrades.Height_Minimized * PROGRAM.OS.RESOLUTION_DPI
+		WinMove,% "ahk_id " GuiTrades.Handle, , , , ,% GuiTrades.Height_Minimized * resDPI
 		DetectHiddenWindows, %hiddenWin%
 
 		GuiControl, Trades:Show,% GuiTrades_Controls.hBTN_Maximize
@@ -1812,6 +1839,8 @@
 
 		resDPI := PROGRAM.OS.RESOLUTION_DPI
 		iniFile := PROGRAM.INI_FILE
+
+		resDPI := Get_DpiFactor()
 
 		try {
 			if (GuiTrades.Is_Minimized)
@@ -2019,7 +2048,8 @@
 			buyerName := playerOrTab
 
 		if (applyToThisTabOnly=True) && IsNum(playerOrTab) {
-			buyerTabs := playerOrTab
+			tabContent := Gui_Trades.GetTabContent(playerOrTab)
+			buyerTabs := playerOrTab, tab%playerOrTab%IsInArea := tabContent.IsInArea, tab%playerOrTab%HasNewMessage := tabContent.HasNewMessage
 		}
 		else {
 			Loop % GuiTrades.Tabs_Count {
@@ -2050,9 +2080,10 @@
 			}
 
 			state := whatDo="Set"? True : False
-			if (tabStyle = "JoinedArea")
+			tabContent := GUI_Trades.GetTabContent(A_LoopField)
+			if (tabStyle = "JoinedArea" && !tabContent.IsInArea)
 				Gui_Trades.UpdateSlotContent(A_LoopField, "IsInArea", state)
-			else if (tabStyle = "WhisperReceived")
+			else if (tabStyle = "WhisperReceived" && !tabContent.HasNewMessage)
 				Gui_Trades.UpdateSlotContent(A_LoopField, "HasNewMessage", state)
 
 			if (styleCurrent != newStyle) {

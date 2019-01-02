@@ -34,7 +34,7 @@ Get_LocalSettings_DefaultValues() {
 	settings.SETTINGS_MAIN.TradingWhisperSFXPath 										:= PROGRAM.SFX_FOLDER "\WW_MainMenu_Letter.wav" 
 	settings.SETTINGS_MAIN.RegularWhisperSFXPath 										:= ""
 	settings.SETTINGS_MAIN.BuyerJoinedAreaSFXPath 										:= ""
-	settings.SETTINGS_MAIN.NoTabsTransparency 											:= "30"
+	settings.SETTINGS_MAIN.NoTabsTransparency 											:= "0"
 	settings.SETTINGS_MAIN.TabsOpenTransparency 										:= "100"
 	settings.SETTINGS_MAIN.HideInterfaceWhenOutOfGame 									:= "False"
 	settings.SETTINGS_MAIN.CopyItemInfosOnTabChange 									:= "False"
@@ -522,7 +522,7 @@ Get_LocalSettings() {
 		}
 	}
 
-	/* No longer used
+	/*	No longer used
 	PROGRAM.OS := {}
 	PROGRAM.OS.RESOLUTION_DPI := Get_DpiFactor()
 	*/

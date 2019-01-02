@@ -57,7 +57,7 @@
 		global TrayNotifications_Handles
 		global PROGRAM
 
-		resDPI := PROGRAM.OS.RESOLUTION_DPI
+		resDPI := Get_DpiFactor()
 
 	;	Monitor infos
 		local MonitorCount, MonitorPrimary, MonitorWorkArea

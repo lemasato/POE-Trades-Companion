@@ -204,8 +204,9 @@ Send_GameMessage(actionType, msgString, gamePID="") {
 	Return
 
 	Send_GameMessage_ClearChat:
-		if !IsIn(firstChar, "/,`%,&,#,@") ; Not a command. We send / then remove it to make sure chat is empty
-			SendEvent,{sc035}{BackSpace} ; Slash
+		if !IsIn(firstChar, "/,`%,&,#,@") { ; Not a command. We send / then remove it to make sure chat is empty
+			SendEvent,/{BackSpace}
+		}
 	Return
 
 	Send_GameMessage_OpenChat:

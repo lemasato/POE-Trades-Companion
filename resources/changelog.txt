@@ -1,3 +1,31 @@
+1.13.6 (13 Nov 2018)
+	Changes / Improvements:
+	- Improved the actions list for Custom Buttons and Advanced Hotkeys.
+	The buttons "Replace at selected", "Add at selected" and "Add at the end" have been removed and replaced with "Save changes to action..." and "Add as a new action".
+	You can now also re-order actions by right clicking on them and choosing "Move up" or "Move down"
+	
+	"Save changes to action..." will show a drop-down menu where the user can choose which action number to replace.
+	"Add as a new action" will push the action to the end of the list. If the last action is "Close current tab" or "Write message", then the action will be added as previous to last.
+	
+	- Instant Whisper now also works for translated whispers from the official GGG trading website.
+	- Automatically make the interface click-through if the "no tab remaining" transparency is set as 0.
+	- Automatically hide/restore the Item Grid when minimizing/maximizing the Trades GUI.
+	- Added style to the sections in the Settings menu.
+	Also added style to the button to reset settings.
+	- Added a warning when deleting an advanced hotkey profile.
+	- Show a readable hotkey name in the advanced hotkeys profiles list instead of the ahk hotkey.
+	- Reverted the change that would hide FileInstall_Cmds.ahk (from 1.13.5).
+	This allow the user to move files individually without getting errors due to a missing file.
+	
+	Fixes:
+	- Wouldn't play the buyer joined area sound (since 1.13.4 update)
+	- Wouldn't automatically run as admin (since 1.13.5 update)
+	- Woudnl't enable any following advanced hotkeys if one of the profiles had no hotkey set.
+	- Some keys wouldn't work correctly in hotkeys (Such as Space,Enter,Tab,Delete,AppsKey,Escape,Pause,PrintScreen).
+	- "Lock Position?" from the tray menu would not do anything.
+	Note that the "Lock Position?" option from right clicking the Trades GUI actually worked. Only the tray option was bugged.
+
+= = = = = = = = = = = = =	
 1.13.5 (07 Oct 2018)
 
 	Changes / Improvements:
@@ -20,7 +48,7 @@
 	- In case the league cannot be detected in a trading whisper, it will no longer be ignored and instead the league will appear as "???".
 	
 	Fixes:
-	- Some keys wouldn't work correctly in hotkeys.
+	- Some keys wouldn't work correctly in hotkeys (Such as Space,Enter,Tab,Delete,AppsKey,Escape,Pause,PrintScreen).
 	- The Item Grid for regular tabs would appear for items at position 13.
 	
 	Misc:

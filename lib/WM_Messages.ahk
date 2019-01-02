@@ -110,6 +110,7 @@ WM_LBUTTONUP() {
 	if (A_Gui = "Trades") {
 		if (GUITRADES_TOOLTIP) {
 			RemoveToolTip()
+			GUITRADES_TOOLTIP := False
 			GUI_Trades.UnSetTabStyleWhisperReceived(GUI_Trades.GetActiveTab())
 		}
 		; GUI_Trades.RemoveButtonFocus() ; Don't do this. It will prevent buttons from working.

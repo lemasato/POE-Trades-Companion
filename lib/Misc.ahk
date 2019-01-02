@@ -136,6 +136,8 @@ Do_Action(actionType, actionContent="", isHotkey=False, uniqueNum="") {
 		SendEvent,{Raw}%actionContentWithVariables%
 	else if (actionType = "IGNORE_SIMILAR_TRADE")
 		GUI_Trades.AddActiveTrade_To_IgnoreList()
+	else if (actionType = "CLOSE_SIMILAR_TABS")
+		GUI_Trades.CloseOtherTabsForSameItem()
 	else if (actionType = "SHOW_GRID")
 		GUI_Trades.ShowActiveTabItemGrid()
 

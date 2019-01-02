@@ -90,7 +90,7 @@ Start_Script() {
 
 	; Set global - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	PROGRAM.NAME					:= "POE Trades Companion"
-	PROGRAM.VERSION 				:= "1.13.5"
+	PROGRAM.VERSION 				:= "1.13.6"
 	PROGRAM.IS_BETA					:= IsContaining(PROGRAM.VERSION, "beta")?"True":"False"
 
 	PROGRAM.GITHUB_USER 			:= "lemasato"
@@ -143,7 +143,6 @@ Start_Script() {
 
 	; Auto admin reload - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	if (!A_IsAdmin && !RUNTIME_PARAMETERS.SkipAdmin) {
-		; GUI_SimpleWarn.Show("", "Reloading to request admin privilieges in 3...`nClick on this window to reload now.", "Green", "White", {CountDown:True, CountDown_Timer:1000, CountDown_Count:3, WaitClose:1, CloseOnClick:True})
 		ReloadWithParams(" /MyDocuments=""" MyDocuments """", getCurrentParams:=True, asAdmin:=True)
 	}
 
@@ -260,7 +259,7 @@ Start_Script() {
 	TrayMenu()
 	EnableHotkeys()
 
-	ImageButton_TestDelay()
+	; ImageButton_TestDelay()
 	GUI_TradesMinimized.Create()
 	Gui_Trades.Create()
 	GUI_Trades.LoadBackup()
