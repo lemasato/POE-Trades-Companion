@@ -20,6 +20,7 @@
 	Menu,Tray,Add,Mode: Window, Tray_ModeWindow
 	Menu,Tray,Add,Mode: Dock, Tray_ModeDock
 	Menu,Tray,Add,Cycle Dock, Tray_CycleDock
+	Menu,Tray,Add,Reset Position, Tray_ResetPosition
 	Menu,Tray,Add
 	Menu,Tray,Add,Reload, Tray_Reload
 	Menu,Tray,Add,Close, Tray_Exit
@@ -120,4 +121,7 @@ Tray_ToggleLockPosition(toggle="") {
 
 	if (PROGRAM.SETTINGS.SETTINGS_MAIN.TradesGUI_Mode = "Dock") && (toggle != "Check")
 		Tray_ModeWindow()
+}
+Tray_ResetPosition() {
+	Tray_ModeWindow()
 }
