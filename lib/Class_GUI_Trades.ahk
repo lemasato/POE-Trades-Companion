@@ -392,6 +392,9 @@
 				Menu, HeaderMenu, Check, Lock Position?
 			Menu, HeaderMenu, Show
 		}
+		else
+			Menu, Tray, Show
+			
 		Return
 
 		Gui_Trades_ContextMenu_LockPosition:

@@ -388,6 +388,7 @@ Class GUI_Settings {
 		; * * First group
 		Gui.Add("Settings", "CheckBox", "x" leftMost2+10 " y" upMost2+20 "  BackgroundTrans hwndhCB_HideInterfaceWhenOutOfGame", "Hide the interface when not in game?")
 		cbNotInGamePos := Get_ControlCoords("Settings", GuiSettings_Controls.hCB_HideInterfaceWhenOutOfGame)
+		Gui.Add("Settings", "CheckBox", "xp y+5 hwndhCB_MinimizeInterfaceToBottomLeft", "Minimize interface to bottom left instead?" )
 		Gui.Add("Settings", "CheckBox", "xp y+15 hwndhCB_CopyItemInfosOnTabChange", "Copy the item infos on tab change?")
 		Gui.Add("Settings", "CheckBox", "xp y+1 hwndhCB_AutoFocusNewTabs", "Auto focus new tabs?")
 		Gui.Add("Settings", "CheckBox", "xp y+15 hwndhCB_AutoMinimizeOnAllTabsClosed", "Auto minimize once all tabs are closed?")
@@ -444,7 +445,7 @@ Class GUI_Settings {
 		Gui.Add("Settings", "Slider", "x+1 yp w120 AltSubmit ToolTip Range30-100 hwndhSLIDER_TabsOpenTransparency")
 		
 		; * * Subroutines + User settings
-		GuiSettings.TabSettingsMain_Controls := "hCB_HideInterfaceWhenOutOfGame,hCB_CopyItemInfosOnTabChange,hCB_AutoFocusNewTabs,hCB_AutoMinimizeOnAllTabsClosed,hCB_AutoMaximizeOnFirstNewTab,hCB_SendTradingWhisperUponCopyWhenHoldingCTRL"
+		GuiSettings.TabSettingsMain_Controls := "hCB_HideInterfaceWhenOutOfGame,hCB_MinimizeInterfaceToBottomLeft,hCB_CopyItemInfosOnTabChange,hCB_AutoFocusNewTabs,hCB_AutoMinimizeOnAllTabsClosed,hCB_AutoMaximizeOnFirstNewTab,hCB_SendTradingWhisperUponCopyWhenHoldingCTRL"
 		. ",hCB_TradingWhisperSFXToggle,hEDIT_TradingWhisperSFXPath,hBTN_BrowseTradingWhisperSFX,hCB_RegularWhisperSFXToggle,hEDIT_RegularWhisperSFXPath,hBTN_BrowseRegularWhisperSFX"
 		. ",hCB_BuyerJoinedAreaSFXToggle,hEDIT_BuyerJoinedAreaSFXPath,hBTN_BrowseBuyerJoinedAreaSFX"
 		. ",hSLIDER_NoTabsTransparency,hSLIDER_TabsOpenTransparency,hCB_AllowClicksToPassThroughWhileInactive,hCB_ShowTabbedTrayNotificationOnWhisper"
@@ -994,7 +995,7 @@ Class GUI_Settings {
 		global PROGRAM
 		iniFile := PROGRAM.INI_FILE
 
-		if IsIn(CtrlName, "hCB_HideInterfaceWhenOutOfGame,hCB_CopyItemInfosOnTabChange,hCB_AutoFocusNewTabs"
+		if IsIn(CtrlName, "hCB_HideInterfaceWhenOutOfGame,hCB_MinimizeInterfaceToBottomLeft,hCB_CopyItemInfosOnTabChange,hCB_AutoFocusNewTabs"
 		. ",hCB_AutoMinimizeOnAllTabsClosed,hCB_AutoMaximizeOnFirstNewTab,hCB_TradingWhisperSFXToggle,hCB_BuyerJoinedAreaSFXToggle"
 		. ",hCB_RegularWhisperSFXToggle,hCB_AllowClicksToPassThroughWhileInactive,hCB_ShowTabbedTrayNotificationOnWhisper,hCB_SendTradingWhisperUponCopyWhenHoldingCTRL"
 		. ",hCB_PushBulletOnTradingWhisper,hCB_PushBulletOnPartyMessage,hCB_PushBulletOnWhisperMessage,hCB_PushBulletOnlyWhenAfk")
@@ -1099,6 +1100,7 @@ Class GUI_Settings {
 
 		; Checkboxes
 		GuiControl, Settings:,% GuiSettings_Controls.hCB_HideInterfaceWhenOutOfGame,% thisTabSettings.HideInterfaceWhenOutOfGame
+		GuiControl, Settings:,% GuiSettings_Controls.hCB_MinimizeInterfaceToBottomLeft,% thisTabSettings.MinimizeInterfaceToBottomLeft
 		GuiControl, Settings:,% GuiSettings_Controls.hCB_CopyItemInfosOnTabChange,% thisTabSettings.CopyItemInfosOnTabChange
 		GuiControl, Settings:,% GuiSettings_Controls.hCB_AutoFocusNewTabs,% thisTabSettings.AutoFocusNewTabs
 		GuiControl, Settings:,% GuiSettings_Controls.hCB_AutoMinimizeOnAllTabsClosed,% thisTabSettings.AutoMinimizeOnAllTabsClosed
@@ -4060,6 +4062,7 @@ Class GUI_Settings {
 
 
 		,	"hCB_HideInterfaceWhenOutOfGame": 				"Hides the interface when tabbed out of game."
+		,	"hCB_MinimizeInterfaceToBottomLeft": 			"Minimize the interface to the bottom-left of its position instead of top-right."
 		,	"hCB_CopyItemInfosOnTabChange": 				"Copies the tab's item infos upon changing tabs."
 		,	"hCB_AutoFocusNewTabs": 						"When receiving a new trading whisper, activates the new tab."
 		, 	"hCB_AutoMinimizeOnAllTabsClosed": 				"Puts the interface in its minimized state upon closing the last open tab."
@@ -4119,7 +4122,7 @@ Class GUI_Settings {
 		,	"hBTN_AddActionAtEnd":"Add the new action at the end of the list."
 		, 	"hBTN_SaveChangesToAction": "Show a menu to select which button to save the changes to."
 		,	"hBTN_AddAsNewAction": "Add as a new action to the end of the list."
-		.	.					   "`nIf the last action is ""Close tab"" or a ""Write Message"" action, it will be added before it."
+			.					   "`nIf the last action is ""Close tab"" or a ""Write Message"" action, it will be added before it."
 		,	"hLV_ButtonsActions":"List of actions that will be performed upon clicking this button."
 
 
@@ -4138,7 +4141,7 @@ Class GUI_Settings {
 		,	"hEDIT_HotkeyAdvActionContent":"Action content. Set the message that should be sent with this action."
 		, 	"hBTN_HotkeyAdvSaveChangesToAction": "Show a menu to select which button to save the changes to."
 		,	"hBTN_HotkeyAdvAddAsNewAction": "Add as a new action to the end of the list."
-		.	.					   "`nIf the last action is ""Close tab"" or a ""Write Message"" action, it will be added before it."
+			.					   "`nIf the last action is ""Close tab"" or a ""Write Message"" action, it will be added before it."
 		,	"hLV_HotkeyAdvActionsList":"List of actions that will be performed upon pressing this hotkey."
 
 		
@@ -4153,6 +4156,7 @@ Class GUI_Settings {
 		,	"hEDIT_HallOfFame":":)"
 
 		, "":""}
+		
 		Loop 8 { ; Set same as first one
 			_tooltips["hBTN_CustomBtn_" A_Index+1] := _tooltips["hBTN_CustomBtn_1"]
 			_tooltips["hTEXT_CustomBtnSlot_" A_Index+1] := _tooltips["hTEXT_CustomBtnSlot_1"]
@@ -4168,7 +4172,7 @@ Class GUI_Settings {
 
 		_tip := _tooltips[ctrlN]
 		if (DEBUG.SETTINGS.instant_settings_tooltips)
-			_tip := _tip?ctrlN "`n" _tip : ctrlN
+			_tip := _tip? _tip "`n" ctrlN : "No tooltip for this control`n" ctrlN
 
 		if (DEBUG.SETTINGS.settings_copy_ctrlname && ctrlN)
 			Set_Clipboard(ctrlN)

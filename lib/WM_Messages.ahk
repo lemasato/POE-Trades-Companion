@@ -133,7 +133,7 @@ WM_MOUSEMOVE() {
 	static _mouseX, _mouseY, _prevMouseX, _prevMouseY, _prevInfos
 	static curControl, prevControl
 
-	resDPI := PROGRAM.OS.RESOLUTION_DPI
+	resDPI := Get_DpiFactor()
 
 	MouseGetPos, _mouseX, _mouseY
 	if (_mouseX = _prevMouseX) && (_mouseY = _prevMouseY)

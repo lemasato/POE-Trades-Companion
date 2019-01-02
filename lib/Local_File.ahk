@@ -58,6 +58,7 @@ Get_LocalSettings_DefaultValues() {
 	settings.SETTINGS_MAIN.PushBulletOnWhisperMessage									:= "False"
 	settings.SETTINGS_MAIN.PushBulletOnlyWhenAfk										:= "True"
 	settings.SETTINGS_MAIN.PoeAccounts													:= ""
+	settings.SETTINGS_MAIN.MinimizeInterfaceToBottomLeft								:= "False"
 
 
 	settings.SETTINGS_CUSTOMIZATION_SKINS 												:= {}
@@ -304,6 +305,8 @@ LocalSettings_IsValueValid(iniSect, iniKey, iniValue) {
 			isValueValid := True
 		else if (iniKey = "PoeAccounts")
 			isValueValid := True
+		else if (iniKey = "MinimizeInterfaceToBottomLeft")
+			isValueValid := IsIn(iniValue, "True,False") ? True : False	
 	}
 
 	else if IsIn(iniSect, "SETTINGS_CUSTOMIZATION_SKINS,SETTINGS_CUSTOMIZATION_SKINS_UserDefined") {
@@ -519,8 +522,10 @@ Get_LocalSettings() {
 		}
 	}
 
+	/* No longer used
 	PROGRAM.OS := {}
 	PROGRAM.OS.RESOLUTION_DPI := Get_DpiFactor()
+	*/
 
 	return settingsObj
 }

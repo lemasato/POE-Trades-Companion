@@ -132,7 +132,8 @@
 		; Get Trades GUI pos
 		hiddenWin := A_DetectHiddenWindows
 		DetectHiddenWindows, On
-		WinGetPos, gtX, gtY, gtW, ,% "ahk_id " GuiTrades.Handle
+		WinGetPos, gtX, gtY, gtW, gtH,% "ahk_id " GuiTrades.Handle
+		WinGetPos, gtmX, gtmY, gtmW, gtmH,% "ahk_id " GuiTradesMinimized.Handle
 		foundHwnd := WinExist("ahk_id " GuiTradesMinimized.Handle) ; Check if this gui exists
 		isTradesWinActive := WinActive("ahk_id " GuiTrades.Handle)
 		DetectHiddenWindows, %hiddenWin%
@@ -140,7 +141,11 @@
 		if !(foundHwnd) ; Not found, create it
 			GUI_TradesMinimized.Create()
 
-		xpos := gtX+gtW-GuiTradesMinimized.Width, ypos := gtY ; Caculate xpos
+		if (PROGRAM.SETTINGS.SETTINGS_MAIN.MinimizeInterfaceToBottomLeft = "True")
+			xpos := gtX, ypos := gtY+gtH-gtmH ; bottom left
+		else
+			xpos := gtX+gtW-GuiTradesMinimized.Width, ypos := gtY ; top right
+		
 		xpos := IsNum(xpos) ? xpos : IsNum( A_ScreenWidth-(GuiTrades.Width*resDPI) ) ? A_ScreenWidth-(GuiTrades.Width*resDPI) : 0
 		ypos := IsNum(ypos) ? ypos : 0
 		if (isTradesWinActive)
@@ -150,7 +155,7 @@
 	}
 
 	Maximize() {
-		global GuiTrades, GuiTradesMinimized
+		global PROGRAM, GuiTrades, GuiTradesMinimized
 
 		GuiTrades.Is_Maximized := True
 		GuiTrades.Is_Minimized := False
@@ -158,11 +163,16 @@
 		; Get Trades Min GUI pos
 		hiddenWin := A_DetectHiddenWindows
 		DetectHiddenWindows, On
-		WinGetPos, gtmX, gtmY, gtmW, ,% "ahk_id " GuiTradesMinimized.Handle
+		WinGetPos, gtmX, gtmY, gtmW, gtmH,% "ahk_id " GuiTradesMinimized.Handle
+		WinGetPos, gtX, gtY, gtW, gtH,% "ahk_id " GuiTrades.Handle
 		isTradesWinActive := WinActive("ahk_id " GuiTradesMinimized.Handle)
 		DetectHiddenWindows, %hiddenWin%
 
-		xpos := gtmX+gtmW-GuiTrades.Width, ypos := gtmY ; Caculate xpos
+		if (PROGRAM.SETTINGS.SETTINGS_MAIN.MinimizeInterfaceToBottomLeft = "True")
+			xpos := gtmX, ypos := gtmY+gtmH-gtH ; bottom left
+		else
+			xpos := gtmX+gtmW-gtw, ypos := gtmY ; top right
+
 		xpos := IsNum(xpos) ? xpos : IsNum( A_ScreenWidth-(GuiTrades.Width*resDPI) ) ? A_ScreenWidth-(GuiTrades.Width*resDPI) : 0
 		ypos := IsNum(ypos) ? ypos : 0
 		if (isTradesWinActive)
@@ -186,12 +196,19 @@
 	SavePosition() {
 		global PROGRAM, GuiTrades, GuiTradesMinimized
 
-		WinGetPos, xpos, ypos, width, ,% "ahk_id " GuiTradesMinimized.Handle
-		if !IsNum(xpos+width-GuiTrades.Width) || !IsNum(ypos)
+		WinGetPos, gtX, gtY, gtW, gtH,% "ahk_id " GuiTrades.Handle
+		WinGetPos, gtmX, gtmY, gtmW, gtmH,% "ahk_id " GuiTradesMinimized.Handle
+
+		if (PROGRAM.SETTINGS.SETTINGS_MAIN.MinimizeInterfaceToBottomLeft = "True")
+			saveX := gtmX, saveY := gtmY+gtmH-gtH
+		else
+			saveX := gtX+gtmW-gtW, saveY := gtmY
+		
+		if !IsNum(saveX) || !IsNum(saveY)
 			Return
 
-		INI.Set(PROGRAM.INI_FILE, "SETTINGS_MAIN", "Pos_X", xpos+width-GuiTrades.Width)
-		INI.Set(PROGRAM.INI_FILE, "SETTINGS_MAIN", "Pos_Y", ypos)
+		INI.Set(PROGRAM.INI_FILE, "SETTINGS_MAIN", "Pos_X", saveX)
+		INI.Set(PROGRAM.INI_FILE, "SETTINGS_MAIN", "Pos_Y", saveY)
 	}
 
 	
