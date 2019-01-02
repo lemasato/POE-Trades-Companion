@@ -125,7 +125,7 @@
 	}
 
 	Show() {
-		global PROGRAM, GuiTradesMinimized, GuiTrades, 
+		global PROGRAM, GuiTradesMinimized, GuiTrades
 
 		resDPI := PROGRAM.OS.RESOLUTION_DPI
 
