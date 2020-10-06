@@ -21,6 +21,7 @@
 	Menu,TraySheetSub,Add,Delve, Tray_OpenSheet
 	Menu,TraySheetSub,Add,Essence, Tray_OpenSheet
 	Menu,TraySheetSub,Add,Incursion, Tray_OpenSheet
+	Menu,TraySheetSub,Add,Heist, Tray_OpenSheet
 	Menu,Tray,Add,Leagues Sheets, :TraySheetSub
 	Menu,Tray,Add
 	Menu,Tray,Add,% trans.Clickthrough, Tray_ToggleClickthrough ; Clickthrough?
@@ -88,6 +89,7 @@ Tray_OpenSheet() {
 		: A_ThisMenuItem="Delve"?"Delve"
 		: A_ThisMenuItem="Essence"?"Essence"
 		: A_ThisMenuItem="Incursion"?"Incursion"
+		: A_ThisMenuItem="Heist"?"Heist"
 		: ""
 	if (!which)
 		return

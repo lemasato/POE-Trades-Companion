@@ -655,6 +655,7 @@
 			Menu, HelpMenu, Add, Delve, GUI_TradesBuyCompact_LeagueHelpMenu
 			Menu, HelpMenu, Add, Essence, GUI_TradesBuyCompact_LeagueHelpMenu
 			Menu, HelpMenu, Add, Incursion, GUI_TradesBuyCompact_LeagueHelpMenu
+			Menu, HelpMenu, Add, Heist, GUI_TradesBuyCompact_LeagueHelpMenu
 			Menu, HelpMenu, Show
 		}
 		else {
@@ -668,6 +669,7 @@
 				: A_ThisMenuItem="Delve"?"Delve"
 				: A_ThisMenuItem="Essence"?"Essence"
 				: A_ThisMenuItem="Incursion"?"Incursion"
+				: A_ThisMenuItem="Heist"?"Heist"
 				: ""
 			if (!which)
 				return

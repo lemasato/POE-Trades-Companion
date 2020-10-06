@@ -7,6 +7,7 @@
         : which="Delve"?"Delve.png"
         : which="Essence"?"Essence.png"
         : which="Incursion"?"Incursion.png"
+        : which="Heist"?"Heist.png"
         : ""
 
         if (!filePng)

@@ -11567,6 +11567,31 @@ if (ErrorLevel) {
 }
 
 ; ----------------------------
+if !InStr(FileExist(PROGRAM.CHEATSHEETS_FOLDER ""), "D")
+	FileCreateDir,% PROGRAM.CHEATSHEETS_FOLDER ""
+
+if (A_IsCompiled) {
+	sourceFileSize := Get_ResourceSize("resources\cheatsheets\Heist.png")
+	FileGetSize, destFileSize, % PROGRAM.CHEATSHEETS_FOLDER "\Heist.png"
+}
+else {
+	FileGetSize, sourceFileSize, resources\cheatsheets\Heist.png
+	FileGetSize, destFileSize, % PROGRAM.CHEATSHEETS_FOLDER "\Heist.png"
+}
+if (sourceFileSize != destFileSize)
+	FileInstall, resources\cheatsheets\Heist.png, % PROGRAM.CHEATSHEETS_FOLDER "\Heist.png", 1
+if (ErrorLevel) {
+	AppendToLogs("Failed to extract file!"
+	.	"`nSource: resources\cheatsheets\Heist.png"
+	.	"`nDest: " PROGRAM.CHEATSHEETS_FOLDER "\Heist.png"
+	.	"`nFlag: " 2)
+	errorLog .= "`n`n""Failed to extract file!"
+	.	"`nSource: resources\cheatsheets\Heist.png"
+	.	"`nDest: " PROGRAM.CHEATSHEETS_FOLDER "\Heist.png"
+	.	"`nFlag: " 2
+}
+
+; ----------------------------
 
 
 if (errorLog)
