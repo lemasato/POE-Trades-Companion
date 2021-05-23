@@ -1,5 +1,5 @@
 ﻿Class GUI_TradesBuyCompact {
-	
+
 	Create(_maxTabsToRender=50) {
 		global PROGRAM, GAME, SKIN
 		global GuiTradesBuyCompact, GuiTradesBuyCompact_Controls, GuiTradesBuyCompact_Submit
@@ -58,7 +58,7 @@
 		MinMax_X := rightMost-((scaleMult*22)+(3*scaleMult)), MinMax_Y := Header_Y+(4*scaleMult), MinMax_W := scaleMult*22, MinMax_H := scaleMult*22
 		HideoutBtn_X := 15*scaleMult, HideoutBtn_Y := 5*scaleMult, HideoutBtn_W := 30*scaleMult, HideoutBtn_H := 22*scaleMult, SpaceBetweenBtns := 8*scaleMult
 		Title_X := "_CUSTOM_", Title_Y := Header_Y, Title_W := "_CUSTOM_", Title_H := Header_H
-		
+
 		Header2_X := leftMost, Header2_Y := Header_Y+Header_H, Header2_H := scaleMult*22
 		LeftArrow_W := scaleMult*25, LeftArrow_H := Header2_H, RightArrow_W := LeftArrow_W, RightArrow_H := LeftArrow_H
 		Header2_W := Header_W-LeftArrow_W-RightArrow_W
@@ -67,7 +67,7 @@
 		; CloseTab_Y := RightArrow_Y, CloseTab_W := scaleMult*27, CloseTab_H := RightArrow_H
 
 		 ; 1=dont stick to border
-		
+
 		; CloseTab_X := RightArrow_X+RightArrow_W
 
 		; TabUnderline_X := leftMost, TabUnderline_Y := TabButton1_Y+TabButton1_H, TabUnderline_W := guiWidth, TabUnderline_H := 2 ; TO_DO why cant i scaleMult TabUnderline_H?
@@ -237,7 +237,7 @@
 			- Add a text control on the same exact location on the parent gui
 
 			( this part only matters if using the +E0x08000000 style for parent gui)
-			- Compare the control size for an edit box and a text control with the same text 
+			- Compare the control size for an edit box and a text control with the same text
 			  (an edit box and a text control will have difference in sizes due to the edit box borders which the text control doesnt have)
 			  Based on the size difference, move the text control a bit
 
@@ -269,15 +269,15 @@
 		Gui.Add("TradesBuyCompact", "Text", "x" SearchBox_X+( (two-one)/2 ) " y" SearchBox_Y " w" SearchBox_W-( (two-one)/2 ) " h" SearchBox_H " FontQuality5 BackgroundTrans +0x200 c" SKIN.Compact.Settings.COLORS.SearchBar_Empty " hwndhTEXT_SearchBarFake", "...")
 
 		SearchBarCross_X := "_CUSTOM_", SearchBarCross_Y := SearchBox_Y, SearchBarCross_W := 21*scaleMult, SearchBarCross_H := 21*scaleMult
-		
+
 		; imageBtnLog .= Gui.Add("TradesBuyCompact", "ImageButton", "xp+" (SearchBox_W-( (two-one)/2 )) " yp w" 21 " h" 21 " hwndhBTN_SearchBarCross BackgroundTrans", "", styles.SearchBarCross, PROGRAM.FONTS[settings_fontName], settings_fontSize) ; Left Arrow
 		; imageBtnLog .= Gui.Add("TradesBuyCompact", "Picture", "xp+" (SearchBox_W-( (two-one)/2 )) " y" SearchBarCross_Y " w" SearchBarCross_W " h" SearchBarCross_H " hwndhIMG_SearchBarCross Hidden BackgroundTrans", SKIN.Compact.Assets.Misc.SearchBarCross)
 
 		imageBtnLog .= Gui.Add("TradesBuyCompact", "ImageButton", "x" LeftArrow_X " y" LeftArrow_Y " w" LeftArrow_W " h" LeftArrow_H " hwndhBTN_LeftArrow", "", styles.Arrow_Left, PROGRAM.FONTS[settings_fontName], settings_fontSize) ; Left Arrow
 		imageBtnLog .= Gui.Add("TradesBuyCompact", "ImageButton", "x" RightArrow_X " y" RightArrow_Y " w" RightArrow_W " h" RightArrow_H " hwndhBTN_RightArrow", "", styles.Arrow_Right, PROGRAM.FONTS[settings_fontName], settings_fontSize) ; Right Arrow
-				
+
 		; SetEditCueBanner(GuiTradesBuyCompact_Controls.hEDIT_SearchBar, "Search Bar")
-		
+
 		GuiTradesBuyCompact_Controls.GuiTradesBuyCompactSearchHandle := GuiTradesBuyCompactSearch.Handle
 		GuiTradesBuyCompact_Controls.GuiTradesBuyCompactSearchHiddenHandle := GuiTradesBuyCompactSearchHidden.Handle
 		GuiTradesBuyCompact_Controls.hEDIT_SearchBar := GuiTradesBuyCompactSearch_Controls.hEDIT_SearchBar
@@ -291,7 +291,7 @@
 		GuiControl, TradesBuyCompact:+g,% GuiTradesBuyCompact_Controls.hBTN_LeftArrow,% __f
 		__f := GUI_TradesBuyCompact.ScrollDown.bind(GUI_TradesBuyCompact)
 		GuiControl, TradesBuyCompact:+g,% GuiTradesBuyCompact_Controls.hBTN_RightArrow,% __f
-		
+
 
 		/*
 		Gui.Add("TradesBuyCompact", "Text", "x" leftMost " y" upMost " w" guiWidth-(borderSize*2)-30 " h25 hwndhTEXT_HeaderGhost BackgroundTrans ", "") ; Title bar, allow moving
@@ -314,7 +314,7 @@
 		Gui.Add("TradesBuyCompact", "ImageButton", "x+0 yp wp hp hwndhBTN_ScrollDown", ">", Style_SystemButton, PROGRAM.FONTS[settings_fontName], settings_fontSize)
 		*/
 
-		SmallButton_W := 35*scaleMult, SmallButton_H := 25*scaleMult, SmallButton_Space := 5*scaleMult, SmallButton_Count := 4
+		SmallButton_W := 35*scaleMult, SmallButton_H := 25*scaleMult, SmallButton_Space := 5*scaleMult, SmallButton_Count := 5
 		CloseBtn_W := 15*scaleMult, CloseBtn_H := twoTextLineSize, CloseBtn_X := rightMost-CloseBtn_W, CloseBtn_Y := 0
 		ItemName_X := leftMost+(5*scaleMult), ItemName_Y := (5*scaleMult), ItemName_W := CloseBtn_X-(SmallButton_W*SmallButton_Count)-(SmallButton_Space*SmallButton_Count)-(20*scaleMult)
 		SellerName_X := ItemName_X+ItemName_W, SellerName_Y := ItemName_Y, SellerName_W := SmallButton_W*SmallButton_Count
@@ -340,7 +340,7 @@
 
 			Gui.Add("TradesBuyCompact_Slot" A_Index, "Picture", "x" BackgroundImg_X " y" BackgroundImg_Y " hwndhIMG_Background BackgroundTrans", SKIN.Compact.Assets.Misc.Background)
 			TilePicture("TradesBuyCompact_Slot" A_Index, GuiTradesBuyCompact_Slot%A_Index%_Controls.hIMG_Background, BackgroundImg_W, BackgroundImg_H) ; Fill the background
-			
+
 			Gui.Add("TradesBuyCompact_Slot" A_Index, "Text", "x" ItemName_X " y" ItemName_Y " w" ItemName_W " R1 BackgroundTrans hwndhTEXT_ItemName c" SKIN.Compact.Settings.COLORS.Trade_Info_2)
 			Gui.Add("TradesBuyCompact_Slot" A_Index, "Text", "x" SellerName_X " y" SellerName_Y " w" SellerName_W " R1 BackgroundTrans hwndhTEXT_SellerName c" SKIN.Compact.Settings.COLORS.Trade_Info_2)
 			Gui.Add("TradesBuyCompact_Slot" A_Index, "Picture", CurrencyImg_X . CurrencyImg_Y . CurrencyImg_W . CurrencyImg_H " 0xE BackgroundTrans  hwndhIMG_CurrencyIMG")
@@ -350,33 +350,36 @@
 			imageBtnLog .= Gui.Add("TradesBuyCompact_Slot" A_Index, "ImageButton", "x" CloseBtn_X " y" CloseBtn_Y " w" CloseBtn_W " h" CloseBtn_H " hwndhBTN_Close", "", Styles.Close_Tab, PROGRAM.FONTS[settings_fontName], settings_fontSize)
 			; Gui.Add("TradesBuyCompact_Slot" A_Index, "Progress", "x" Separation_X " y" Separation_Y " w" Separation_W " h" Separation_H " hwndhPROGRESS_Separation Background" SKIN.Compact.Settings.COLORS.Border)
 
-			imageBtnLog .= Gui.Add("TradesBuyCompact_Slot" A_Index, "ImageButton", "x" SmallButton_X " y" SmallButton_Y " w" SmallButton_W " h" SmallButton_H " hwndhBTN_WhisperSeller", "", Styles.Button_Whisper, PROGRAM.FONTS[settings_fontName], settings_fontSize) ; write to seller
+			imageBtnLog .= Gui.Add("TradesBuyCompact_Slot" A_Index, "ImageButton", "x" SmallButton_X " y" SmallButton_Y " w" SmallButton_W " h" SmallButton_H " hwndhBTN_WhoisSeller", "", Styles.Button_Whois, PROGRAM.FONTS[settings_fontName], settings_fontSize) ; whois seller
+			imageBtnLog .= Gui.Add("TradesBuyCompact_Slot" A_Index, "ImageButton", "x+5 yp wp hp hwndhBTN_WhisperSeller", "", Styles.Button_Whisper, PROGRAM.FONTS[settings_fontName], settings_fontSize) ; write to seller
 			imageBtnLog .= Gui.Add("TradesBuyCompact_Slot" A_Index, "ImageButton", "x+5 yp wp hp hwndhBTN_HideoutSeller", "", Styles.Button_Hideout, PROGRAM.FONTS[settings_fontName], settings_fontSize) ; hideout seller
 			imageBtnLog .= Gui.Add("TradesBuyCompact_Slot" A_Index, "ImageButton", "x+5 yp wp hp hwndhBTN_KickSelfSeller", "", Styles.Button_Kick, PROGRAM.FONTS[settings_fontName], settings_fontSize) ; thanks seller
 			imageBtnLog .= Gui.Add("TradesBuyCompact_Slot" A_Index, "ImageButton", "x+5 yp wp hp hwndhBTN_ThankSeller", "", Styles.Button_Thanks, PROGRAM.FONTS[settings_fontName], settings_fontSize) ; kick self
 			; imageBtnLog .= Gui.Add("TradesBuyCompact_Slot" A_Index, "ImageButton", "x+5 yp wp hp hwndhBTN_QuickBtn5", "?", Styles.Button_Special, PROGRAM.FONTS[settings_fontName], settings_fontSize) ; hideout self
-			
+
 			priceImgPos := Get_ControlCoords("TradesBuyCompact_Slot" A_Index, GuiTradesBuyCompact_Slot%A_Index%_Controls.hIMG_CurrencyIMG)
 			priceTxtPos := Get_ControlCoords("TradesBuyCompact_Slot" A_Index, GuiTradesBuyCompact_Slot%A_Index%_Controls.hTEXT_PriceCount)
-			GuiControl, TradesBuyCompact_Slot%A_Index%:Move,% GuiTradesBuyCompact_Slot%A_Index%_Controls.hTEXT_PriceCount,% " x" priceImgPos.X+priceImgPos.W+(2*scaleMult) " y" (priceImgPos.Y+priceImgPos.H/2) - (priceTxtPos.H/2)		
+			GuiControl, TradesBuyCompact_Slot%A_Index%:Move,% GuiTradesBuyCompact_Slot%A_Index%_Controls.hTEXT_PriceCount,% " x" priceImgPos.X+priceImgPos.W+(2*scaleMult) " y" (priceImgPos.Y+priceImgPos.H/2) - (priceTxtPos.H/2)
 			priceTxtPos := Get_ControlCoords("TradesBuyCompact_Slot" A_Index, GuiTradesBuyCompact_Slot%A_Index%_Controls.hTEXT_PriceCount)
 			GuiControl, TradesBuyCompact_Slot%A_Index%:Move,% GuiTradesBuyCompact_Slot%A_Index%_Controls.hTEXT_AdditionalMsg,% "x" priceTxtPos.X+priceTxtPos.W+(10*scaleMult) " y" priceTxtPos.Y " w" SmallButton_X-( priceTxtPos.X+priceTxtPos.W+(10*scaleMult) )
-			
+
 			GuiTradesBuyCompact["Slot" A_Index] := GuiTradesBuyCompact_Slot%A_Index% ; adding gui array to our main gui array as a sub array
 			GuiTradesBuyCompact["Slot" A_Index "_Controls"] := GuiTradesBuyCompact_Slot%A_Index%_Controls
 
 			__f := GUI_TradesBuyCompact.RemoveTab.bind(GUI_TradesBuyCompact, A_Index)
-			GuiControl, TradesBuyCompact_Slot%A_Index%:+g,% GuiTradesBuyCompact_Slot%A_Index%_Controls.hBTN_Close,% __f 
+			GuiControl, TradesBuyCompact_Slot%A_Index%:+g,% GuiTradesBuyCompact_Slot%A_Index%_Controls.hBTN_Close,% __f
+			__f := GUI_TradesBuyCompact.DoTradeButtonAction.bind(GUI_TradesBuyCompact, A_Index, "WhoisSeller")
+			GuiControl, TradesBuyCompact_Slot%A_Index%:+g,% GuiTradesBuyCompact_Slot%A_Index%_Controls.hBTN_WhoisSeller,% __f
 			__f := GUI_TradesBuyCompact.DoTradeButtonAction.bind(GUI_TradesBuyCompact, A_Index, "WhisperSeller")
-			GuiControl, TradesBuyCompact_Slot%A_Index%:+g,% GuiTradesBuyCompact_Slot%A_Index%_Controls.hBTN_WhisperSeller,% __f 
+			GuiControl, TradesBuyCompact_Slot%A_Index%:+g,% GuiTradesBuyCompact_Slot%A_Index%_Controls.hBTN_WhisperSeller,% __f
 			__f := GUI_TradesBuyCompact.DoTradeButtonAction.bind(GUI_TradesBuyCompact, A_Index, "HideoutSeller")
-			GuiControl, TradesBuyCompact_Slot%A_Index%:+g,% GuiTradesBuyCompact_Slot%A_Index%_Controls.hBTN_HideoutSeller,% __f 
+			GuiControl, TradesBuyCompact_Slot%A_Index%:+g,% GuiTradesBuyCompact_Slot%A_Index%_Controls.hBTN_HideoutSeller,% __f
 			__f := GUI_TradesBuyCompact.DoTradeButtonAction.bind(GUI_TradesBuyCompact, A_Index, "KickSelfSeller")
-			GuiControl, TradesBuyCompact_Slot%A_Index%:+g,% GuiTradesBuyCompact_Slot%A_Index%_Controls.hBTN_KickSelfSeller,% __f 
+			GuiControl, TradesBuyCompact_Slot%A_Index%:+g,% GuiTradesBuyCompact_Slot%A_Index%_Controls.hBTN_KickSelfSeller,% __f
 			__f := GUI_TradesBuyCompact.DoTradeButtonAction.bind(GUI_TradesBuyCompact, A_Index, "ThankSeller")
-			GuiControl, TradesBuyCompact_Slot%A_Index%:+g,% GuiTradesBuyCompact_Slot%A_Index%_Controls.hBTN_ThankSeller,% __f 
+			GuiControl, TradesBuyCompact_Slot%A_Index%:+g,% GuiTradesBuyCompact_Slot%A_Index%_Controls.hBTN_ThankSeller,% __f
 
-			Gui.Show("TradesBuyCompact_Slot" A_Index, "x0 y0 w" guiWidth+borderSize " h" Separation_Y+Separation_H " Hide")			
+			Gui.Show("TradesBuyCompact_Slot" A_Index, "x0 y0 w" guiWidth+borderSize " h" Separation_Y+Separation_H " Hide")
 		}
 		; calculate slot positions
 		GuiTradesBuyCompact["Slot1_Pos"] := (Header2_Y+Header2_H)*windowsDPI
@@ -384,8 +387,8 @@
 		GuiTradesBuyCompact["Slot3_Pos"] := GuiTradesBuyCompact["Slot2_Pos"] + (GuiTradesBuyCompact.Slot1.Height*windowsDPI)
 		GuiTradesBuyCompact["Slot4_Pos"] := GuiTradesBuyCompact["Slot3_Pos"] + (GuiTradesBuyCompact.Slot1.Height*windowsDPI)
 
-		
-		/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+
+		/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 		*	SHOW
 		*/
 
@@ -418,7 +421,7 @@
 		Gui_TradesBuyCompact.ResetPositionIfOutOfBounds()
 
 		Return
-	
+
 		GUI_TradesBuyCompact_Slot_Size:
 			; So we can know the Slot gui height
 			if (A_Gui)
@@ -464,12 +467,12 @@
 		if (!GuiTradesBuyCompact.Tabs_Count)
 			Menu, RClickMenu, Disable,% PROGRAM.TRANSLATIONS.GUI_Trades.RMENU_CloseAllTabs
 		if RegExMatch(A_Gui, "TradesBuyCompact_Slot\d+")
-			thisSlotID := RegExReplace(A_Gui, "\D")			
+			thisSlotID := RegExReplace(A_Gui, "\D")
 		else
 			Menu, RClickMenu, Disable,% PROGRAM.TRANSLATIONS.GUI_Trades.RMENU_CloseOtherTabsForSameItem
 
 		Menu, RClickMenu, Show
-			
+
 		Return
 
 		Gui_TradesBuyCompact_ContextMenu_ExpandUpwardsToggle:
@@ -564,7 +567,7 @@
 
 	CloseOtherTabsForSameItem(slotID) {
 		global GuiTradesBuyCompact
-		
+
 		slotInfos := Gui_TradesBuyCompact.GetSlotContent(slotID)
 		slotsToLoop := GuiTradesBuyCompact.Tabs_Count
 		; Parse every tab, from highest to lowest so when we close it, it doesn't affect tab order
@@ -603,7 +606,7 @@
 		Loop % tabsCount { ; Get all tabs content
 			tabInfos%A_Index% := GUI_TradesBuyCompact.GetSlotContent(A_Index)
 		}
-		
+
 		if (tabsLimit)
 			Gui_TradesBuyCompact.Create(tabsLimit) ; Recreate GUI with more tabs
 		else
@@ -635,7 +638,7 @@
 			MsgBox(4096, "", "Error when deciding the tabs limit. Current limit: """ tabsLimit """")
 			Return
 		}
-		
+
 		GUI_TradesBuyCompact.RecreateGUI(nextTabsLimit)
 	}
 
@@ -643,7 +646,7 @@
 		global PROGRAM
 		global GuiTradesBuyCompact, GuiTradesBuyCompact_Controls, LASTACTIVATED_GAMEPID
 
-		
+
 		if (btnType="Hideout") {
 			keysState := GetKeyStateFunc("Ctrl,LCtrl,RCtrl")
 			Send_GameMessage("WRITE_SEND", "/hideout", LASTACTIVATED_GAMEPID)
@@ -662,7 +665,7 @@
 		else {
 			ShowToolTip("This button isn't implemented yet.")
 			SetTimer, RemoveToolTip, -2000
-		}		
+		}
 		return
 	}
 
@@ -673,7 +676,7 @@
 
 		if !IsNum(slotNum)
 			Return
-			
+
 		slotContent := Gui_TradesBuyCompact.GetSlotContent(slotNum)
 		tabPID := slotContent.PID
 
@@ -682,12 +685,14 @@
 			keysState := GetKeyStateFunc("Ctrl,LCtrl,RCtrl")
 
 			actionType := btnType="WhisperSeller" ? "WRITE_MSG"
+				: btnType="WhoisSeller" ? "WHOIS_SELLER"
 				: btnType="HideoutSeller" ? "SEND_MSG"
 				: btnType="KickSelfSeller" ? "KICK_MYSELF"
 				: btnType="ThankSeller" ? "SEND_MSG"
 				: ""
-			
+
 			actionContent := btnType="WhisperSeller" ? "@%seller% "
+				: btnType="WhoisSeller" ? "/whois %seller%"
 				: btnType="HideoutSeller" ? "/hideout %seller%"
 				: btnType="KickSelfSeller" ? "/kick %myself%"
 				: btnType="ThankSeller" ? "@%seller% ty!"
@@ -703,8 +708,8 @@
 				GUI_TradesBuyCompact.SaveStats(slotNum)
 				GUI_TradesBuyCompact.RemoveTab(slotNum)
 			}
-			
-			
+
+
 		}
 		; else { ; Instance doesn't exist anymore, replace and do btn action
 		; 	runningInstances := Get_RunningInstances()
@@ -844,9 +849,9 @@
 		global GuiTradesBuyCompact, GuiTradesBuyCompact_Controls
 
 		GuiControlGet, search, ,% GuiTradesBuyCompact_Controls.hEDIT_HiddenSearchBar
-		
+
 		matches := 0
-		if (search != "") {		
+		if (search != "") {
 			contents := {}
 			Loop % GuiTradesBuyCompact.Tabs_Count {
 				content := GuiTradesBuyCompact["Tab" A_Index "Content"]
@@ -954,7 +959,7 @@
 
 		if (PROGRAM.SETTINGS.SETTINGS_MAIN.DisableBuyInterface="True")
 			return
-			
+
 		tabsLimit := GuiTradesBuyCompact.Tabs_Limit
 		tabsCount := GuiTradesBuyCompact.Tabs_Count
 
@@ -965,7 +970,7 @@
 			; Gui_Trades.UpdateSlotContent(existingTabID, "Other", contentInfos.Other) ; Disabled. Useless?
 			Return "TabAlreadyExists"
 		}
-		
+
 		; Need to allocate more tabs
 		if (tabsCount+1 >= tabsLimit) {
 			GUI_TradesBuyCompact.IncreaseTabsLimit()
@@ -1174,7 +1179,7 @@
 		buyerSlotSizeMax := Get_ControlCoords("TradesBuyCompact_Slot" slotNum, GuiTradesBuyCompact["Slot" slotNum "_Controls"].hTEXT_SellerName).W
 		newBuyerTxtSize := Get_TextCtrlSize(txt:=newTabSeller, fontName:=GuiTradesBuyCompact.Font, fontSize:=GuiTradesBuyCompact.Font_Size).W
 
-		if (newItemTxtSize >= itemSlotSizeMax-10) {	
+		if (newItemTxtSize >= itemSlotSizeMax-10) {
 			cutStr := newTabItem
 			Loop % Ceil( StrLen(newTabItem)/3 ) {
 				StringTrimRight, cutStr, cutStr, 3
@@ -1188,7 +1193,7 @@
 		else
 			hiddenInfosWall .= "`n" "ItemIsCut:"		A_Tab False
 
-		if (newBuyerTxtSize >= buyerSlotSizeMax) {	
+		if (newBuyerTxtSize >= buyerSlotSizeMax) {
 			cutStr := newTabSeller
 			Loop % Ceil( StrLen(newTabSeller)/3 ) {
 				StringTrimRight, cutStr, cutStr, 3
@@ -1208,7 +1213,7 @@
 		GuiControl, ,% GuiTradesBuyCompact["Slot" slotNum "_Controls"].hTEXT_SellerName,% newTabSeller
 		GuiControl, ,% GuiTradesBuyCompact["Slot" slotNum "_Controls"].hTEXT_PriceCount,% newTabPrice
 		GuiControl, ,% GuiTradesBuyCompact["Slot" slotNum "_Controls"].hTEXT_TimeSent,% newTabTimeSent
-		
+
 		; Set price count width
 		GuiControl, Move,% GuiTradesBuyCompact["Slot" slotNum "_Controls"].hTEXT_PriceCount,% "w" priceW*windowsDPI
 
@@ -1219,7 +1224,7 @@
 
 		addMsgSlotSizeMax := Get_ControlCoords("TradesBuyCompact_Slot" slotNum, GuiTradesBuyCompact["Slot" slotNum "_Controls"].hTEXT_AdditionalMsg).W
 		newAddMsgTxtSize := Get_TextCtrlSize(txt:=newTabAddMsg, fontName:=GuiTradesBuyCompact.Font, fontSize:=GuiTradesBuyCompact.Font_Size).W
-		if (newAddMsgTxtSize >= addMsgSlotSizeMax) {	
+		if (newAddMsgTxtSize >= addMsgSlotSizeMax) {
 			cutStr := newTabAddMsg
 			Loop % Ceil( StrLen(newTabAddMsg)/3 ) {
 				StringTrimRight, cutStr, cutStr, 3
@@ -1239,12 +1244,12 @@
 			else {
 				if FileExist(PROGRAM.CURRENCY_IMGS_FOLDER "\" newTabCurrency ".png")
 					currencyPngFile := PROGRAM.CURRENCY_IMGS_FOLDER "\" newTabCurrency ".png"
-				else 
+				else
 					currencyPngFile := PROGRAM.CURRENCY_IMGS_FOLDER "\Unknown.png"
 
 				coords := Get_ControlCoords("TradesBuyCompact_Slot" slotNum, GuiTradesBuyCompact["Slot" slotNum "_Controls"].hIMG_CurrencyIMG)
 				imgSlot_W := coords.W, imgSlot_H := coords.H
-				
+
 				hBitMap := Gdip_CreateResizedHBITMAP_FromFile(currencyPngFile, imgSlot_W*windowsDPI, imgSlot_H*windowsDPI, PreserveAspectRatio:=False)
 				SetImage(GuiTradesBuyCompact["Slot" slotNum "_Controls"].hIMG_CurrencyIMG, hBitmap)
 			}
@@ -1273,7 +1278,7 @@
 		; If position is higher than the allocated slot count, it will be hidden
 		global GuiTradesBuyCompact
 
-		guiName := "TradesBuyCompact_Slot" slotNum, guiSlot := GuiTradesBuyCompact["Slot" slotPos "_Pos"] 
+		guiName := "TradesBuyCompact_Slot" slotNum, guiSlot := GuiTradesBuyCompact["Slot" slotPos "_Pos"]
 		if (guiSlot)
 			Gui.Show(guiName, "x0 y" guiSlot " NoActivate")
 		else Gui, %guiName%:Hide
@@ -1290,7 +1295,7 @@
 			Loop 4 { ; handle the other gui
 				GUI_TradesBuyCompact.SetSlotPosition(num, A_Index+1)
 				num++
-			}	
+			}
 		}
 	}
 
@@ -1313,7 +1318,7 @@
 		; get the first and last gui, based on controls visibility
 		global GuiTradesBuyCompact
 
-		Loop % GuiTradesBuyCompact.Tabs_Count {		
+		Loop % GuiTradesBuyCompact.Tabs_Count {
 			guiName := "TradesBuyCompact_Slot" A_Index
 			GuiControlGet, isVisible, %guiName%:Visible,% GuiTradesBuyCompact["Slot" A_Index "_Controls"].hTEXT_TimeSent
 
@@ -1351,7 +1356,7 @@
 		Toolbar_Hideout	:=	[ [0, skinAssets.Toolbar_Hideout.Normal, "", "", "", pngTransColor]
 		              				, [0, skinAssets.Toolbar_Hideout.Hover, "", "", "", pngTransColor]
 		    	      				, [0, skinAssets.Toolbar_Hideout.Press, "", "", "", pngTransColor] ]
-		
+
 		Toolbar_Sheet	:=	[ [0, skinAssets.Toolbar_Sheet.Normal, "", "", "", pngTransColor]
 		              				, [0, skinAssets.Toolbar_Sheet.Hover, "", "", "", pngTransColor]
 		    	      				, [0, skinAssets.Toolbar_Sheet.Press, "", "", "", pngTransColor] ]
@@ -1359,6 +1364,10 @@
 		Button_Hideout 		:=	[ [0, skinAssets.Button_Hideout.Normal, "", "", "", pngTransColor]
 		              			, [0, skinAssets.Button_Hideout.Hover, "", "", "", pngTransColor]
 		    	      			, [0, skinAssets.Button_Hideout.Press, "", "", "", pngTransColor] ]
+
+		Button_Whois 		:=	[ [0, skinAssets.Button_Whois.Normal, "", "", "", pngTransColor]
+		              			, [0, skinAssets.Button_Whois.Hover, "", "", "", pngTransColor]
+		    	      			, [0, skinAssets.Button_Whois.Press, "", "", "", pngTransColor] ]
 
 		Button_Whisper 		:=	[ [0, skinAssets.Button_Whisper.Normal, "", "", "", pngTransColor]
 		              			, [0, skinAssets.Button_Whisper.Hover, "", "", "", pngTransColor]
@@ -1389,7 +1398,7 @@
 					, Button_Special:Button_Special, Minimize:Minimize,Maximize:Maximize
 					, Close_Tab:Close_Tab, Close_Tab_Use_Character:skinAssets.Close_Tab.Use_Character
 					, Toolbar_Hideout:Toolbar_Hideout, Toolbar_Sheet:Toolbar_Sheet
-					, Button_Hideout:Button_Hideout, Button_Whisper:Button_Whisper, Button_Kick:Button_Kick,Button_Thanks:Button_Thanks}
+					, Button_Hideout:Button_Hideout, Button_Whisper:Button_Whisper, Button_Whois:Button_Whois, Button_Kick:Button_Kick,Button_Thanks:Button_Thanks}
 
 		Return returnArr
 	}
@@ -1456,9 +1465,9 @@
 
 				}
 			}
-			
+
 			GuiControl, TradesBuyCompact:,% GuiTradesBuyCompact_Controls["hBTN_CloseGUI"],% "X"
-			ImageButton.Create(GuiTradesBuyCompact_Controls["hBTN_CloseGUI"], GuiTradesBuyCompact.Style_RedBtn, PROGRAM.FONTS[GuiTradesBuyCompact.Font], GuiTradesBuyCompact.FontSize)						
+			ImageButton.Create(GuiTradesBuyCompact_Controls["hBTN_CloseGUI"], GuiTradesBuyCompact.Style_RedBtn, PROGRAM.FONTS[GuiTradesBuyCompact.Font], GuiTradesBuyCompact.FontSize)
 		}
 
 		GUI_TradesBuyCompact.Redraw()
@@ -1470,7 +1479,7 @@
 		for key, value in GuiTradesBuyCompact_Controls
 			if IsContaining(key, "hBTN_")
 				try ImageButton.DestroyBtnImgList(value)
-		
+
 		Loop % GuiTradesBuyCompact.Tabs_Limit
 			for key, value in GuiTradesBuyCompact["Slot" A_Index "_Controls"]
 				if IsContaining(key, "hBTN_")
@@ -1479,7 +1488,7 @@
 
 	Destroy() {
 		global GuiTradesBuyCompact
-		
+
 		GUI_TradesBuyCompact.DestroyBtnImgList()
 		Gui.Destroy("TradesBuyCompactSearch")
 		Gui.Destroy("TradesBuyCompactSearchHidden")
@@ -1496,10 +1505,10 @@
 			Return GuiTradesBuyCompact_Submit[ctrlName]
 		}
 	}
-	
+
     OnGuiMove(GuiHwnd) {
 		global PROGRAM
-		
+
 		if (PROGRAM.SETTINGS.SETTINGS_MAIN.TradesGUI_Locked = "False")
 			PostMessage, 0xA1, 2,,,% "ahk_id " GuiHwnd
 
@@ -1534,7 +1543,7 @@
 		global PROGRAM, GuiTradesBuyCompact ; , GuiTradesMinimized
 		iniFile := PROGRAM.INI_FILE
 
-		gtPos := GUI_TradesBuyCompact.GetPosition()	
+		gtPos := GUI_TradesBuyCompact.GetPosition()
 		; gtmPos := GUI_TradesMinimized.GetPosition()
 
 		try {
@@ -1543,13 +1552,13 @@
 			; 		Gui, TradesMinimized:Show,% "NoActivate x" Ceil(A_ScreenWidth-gtPos.W) " y"  Ceil(0+gtPos.H-gtmPos.H)
 			; 	else
 			; 		Gui, TradesMinimized:Show,% "NoActivate x" Ceil(A_ScreenWidth-gtmPos.W) " y0"
-			; else 
+			; else
 			Gui, TradesBuyCompact:Show,% "NoActivate x" Ceil(A_ScreenWidth-gtPos.W) " y0"
-			
+
 			if !(dontWrite) {
 				; if (GuiTrades.Is_Minimized)
 					; Gui_TradesMinimized.SavePosition()
-				; else 
+				; else
 					GUI_TradesBuyCompact.SavePosition()
 			}
 		}
@@ -1559,7 +1568,7 @@
 				; Gui, TradesMinimized:Show,% "NoActivate x0 y0"
 			; else
 			Gui, TradesBuyCompact:Show,% "NoActivate x0 y0"
-			
+
 			if !(dontWrite) {
 				INI.Set(iniFile, "SETTINGS_MAIN", "Compact_Pos_X", 0)
 				INI.Set(iniFile, "SETTINGS_MAIN", "Compact_Pos_Y", 0)
@@ -1575,7 +1584,7 @@
 
 		; winHandle := GuiTrades.Is_Minimized ? GuiTradesMinimized.Handle : GuiTrades.Handle
 		winHandle := GuiTradesBuyCompact.Handle
-		
+
 		if !IsWindowInScreenBoundaries(_win:="ahk_id " winHandle, _screen:="All", _adv:=False) {
 			bounds := IsWindowInScreenBoundaries(_win:="ahk_id " winHandle, _screen:="All", _adv:=True)
 			appendTxtFinal := "Win_X: " bounds[index].Win_X " | Win_Y: " bounds[index].Win_Y " - Win_W: " bounds[index].Win_W " | Win_H: " bounds[index].Win_H
@@ -1588,14 +1597,14 @@
 			AppendToLogs("Reset GUI TradesBuyCompact position due to being deemed out of bounds."
 			. "`n" appendTxtFinal)
 			GUI_TradesBuyCompact.ResetPosition()
-			
+
 			TrayNotifications.Show(PROGRAM.TRANSLATIONS.TrayNotifications.PositionHasBeenReset_Title, PROGRAM.TRANSLATIONS.TrayNotifications.PositionHasBeenReset_Msg)
 		}
 	}
 
     Show() {
 		global GuiTradesBuyCompact, PROGRAM
-		
+
 		if (PROGRAM.SETTINGS.SETTINGS_MAIN.DisableBuyInterface="True")
 			return
 
@@ -1615,7 +1624,7 @@
 	}
 
     Close() {
-		
+
 	}
 
 	Redraw() {

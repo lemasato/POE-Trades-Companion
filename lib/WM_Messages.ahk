@@ -21,19 +21,19 @@ WM_NCHITTEST(wParam, lParam) {
 
     static border_size = 6
 
-      
+
     if !A_Gui
         return
-    
+
     WinGetPos, gX, gY, gW, gH
-    
+
     x := lParam<<48>>48, y := lParam<<32>>48
-    
+
     hit_left    := x <  gX+border_size
     hit_right   := x >= gX+gW-border_size
     hit_top     := y <  gY+border_size
     hit_bottom  := y >= gY+gH-border_size
-    
+
     if hit_top
     {
         if hit_left
@@ -56,7 +56,7 @@ WM_NCHITTEST(wParam, lParam) {
         return 0xA
     else if hit_right
         return 0xB
-    
+
     ; else let default hit-testing be done
 }
 
@@ -92,7 +92,7 @@ WM_LBUTTONDOWN() {
 
 		; If it's a CustomButton, allow dragging
 		if IsIn(mouseCtrlHwnd, GuiSettings["CustomButtons_HandlesList"])
-		|| IsIn(mouseCtrlHwnd, GuiSettings["UnicodeButtons_HandlesList"]) { 
+		|| IsIn(mouseCtrlHwnd, GuiSettings["UnicodeButtons_HandlesList"]) {
 			; Get the ctrl coords
 			ctrlCoords := Get_ControlCoords(A_Gui, mouseCtrlHwnd)
 			MOUSEDRAG_CTRL := {Handle:mouseCtrlHwnd}
@@ -103,7 +103,7 @@ WM_LBUTTONDOWN() {
 			MOUSEDRAG_ENABLED := True
 		}
 	}
-	
+
 	else if (A_Gui = "TradesBuyCompactSearch") {
 		mouseCtrlHwnd := Get_UnderMouse_CtrlHwnd()
 		if (mouseCtrlHwnd = GuiTradesBuyCompact_Controls.hTEXT_SearchBarFake) {
@@ -169,18 +169,18 @@ WM_MOUSEMOVE() {
 	if (A_Gui = "Trades") {
 		underMouseCtrl := Get_UnderMouse_CtrlHwnd(), activeTab := GuiTrades.Active_Tab
 		tabInfos := GUI_Trades.GetTabContent(activeTab)
-		
+
 		ctrlToolTip := (underMouseCtrl = GuiTrades_Controls.hBTN_CloseTab) ? "Close this trade window"
 			: (underMouseCtrl = GuiTrades_Controls.hBTN_Minimize) ? "Minimize this interface"
 			: (underMouseCtrl = GuiTrades_Controls.hBTN_Maximize) ? "Maximize this interface"
 		; 	: (underMouseCtrl = GuiTrades_Controls.hBTN_Hideout) ? "Go to your hideout"
 		; 	: (underMouseCtrl = GuiTrades_Controls.hBTN_LeagueHelp) ? "See league informative sheets"
 			: (underMouseCtrl = GuiTrades_Controls.hBTN_LeftArrow) ? "Scroll to the left"
-			: (underMouseCtrl = GuiTrades_Controls.hBTN_RightArrow) ? "Scroll to the right"		
+			: (underMouseCtrl = GuiTrades_Controls.hBTN_RightArrow) ? "Scroll to the right"
 			; : (underMouseCtrl = GuiTrades_Controls["hTEXT_TradeInfos" activeTab]) && (tabInfos.Other != tabInfos.OtherFull) ? StrReplace(tabInfos.OtherFull, "\n", "`n")
 			: (underMouseCtrl = GuiTrades_Controls["hIMG_TradeVerify" activeTab]) ? StrReplace( tabInfos.TradeVerifyInfos, "\n", "`n")
 			: ""
-		
+
 		If (underMouseCtrl != prevControl) {
 			if (ctrlToolTip) {
 				timer := (DEBUG.SETTINGS.instant_settings_tooltips)?(-10)
@@ -376,6 +376,7 @@ WM_MOUSEMOVE() {
 			: (underMouseCtrl = GuiTradesBuyCompact["Slot" slotNum "_Controls"].hTEXT_SellerName) && (slotInfos.SellerIsCut) ? slotInfos.Seller
 			: (underMouseCtrl = GuiTradesBuyCompact["Slot" slotNum "_Controls"].hTEXT_AdditionalMsg) && (slotInfos.AdditionalMsg != slotInfos.AdditionalMsgFull) ? StrReplace(slotInfos.AdditionalMsgFull, "\n", "`n")
 			: (underMouseCtrl = GuiTradesBuyCompact["Slot" slotNum "_Controls"].hBTN_Close) ? "Close this trade window"
+			: (underMouseCtrl = GuiTradesBuyCompact["Slot" slotNum "_Controls"].hBTN_WhoisSeller) ? "Whois seller"
 			: (underMouseCtrl = GuiTradesBuyCompact["Slot" slotNum "_Controls"].hBTN_WhisperSeller) ? "Whisper this seller"
 			: (underMouseCtrl = GuiTradesBuyCompact["Slot" slotNum "_Controls"].hBTN_HideoutSeller) ? "Go to seller's hideout"
 			: (underMouseCtrl = GuiTradesBuyCompact["Slot" slotNum "_Controls"].hBTN_KickSelfSeller) ? "Kick yourself from party"
@@ -387,9 +388,9 @@ WM_MOUSEMOVE() {
 			: (underMouseCtrl = GuiTradesBuyCompact_Controls.hEDIT_HiddenSearchBar || underMouseCtrl = GuiTradesBuyCompact_Controls.hTEXT_SearchBarFake) ? "Search by seller or item"
 			: (underMouseCtrl = GuiTradesBuyCompact_Controls.hIMG_SearchBarCross) ? "Clear the searchbox"
 			: (underMouseCtrl = GuiTradesBuyCompact_Controls.hBTN_LeftArrow) ? "Scroll upwards"
-			: (underMouseCtrl = GuiTradesBuyCompact_Controls.hBTN_RightArrow) ? "Scroll downwards"		
+			: (underMouseCtrl = GuiTradesBuyCompact_Controls.hBTN_RightArrow) ? "Scroll downwards"
 			: ""
-		
+
 		If (underMouseCtrl != prevControl) {
 			if (ctrlToolTip) {
 				timer := (DEBUG.SETTINGS.instant_settings_tooltips)?(-10)
@@ -437,7 +438,7 @@ WM_MOUSEMOVE() {
 WM_MOUSEWHEEL(wParam, lParam) {
 	WheelDelta := 120 << 16
 	isWheelUp := WheelDelta=wParam?True:False
-	
+
 	if (A_Gui="TradesBuyCompact") {
 		if (isWheelUp)
 			GUI_TradesBuyCompact.ScrollUp()
@@ -446,20 +447,20 @@ WM_MOUSEWHEEL(wParam, lParam) {
 	}
 }
 
-AHK_NOTIFYICON(wParam, lParam) { 
+AHK_NOTIFYICON(wParam, lParam) {
 	global CANCEL_TRAY_MENU
     if (lParam = 0x202) { ; WM_LBUTTONUP
 		dblClkTime := DllCall("user32.dll\GetDoubleClickTime")
 		dblClkTime := IsNum(dblClkTime)?dblClkTime:500
         SetTimer, AHK_NOTIFYICON_ShowTrayMenu,% "-" dblClkTime+20
-        return 0 
+        return 0
     }
 	return
 
 	AHK_NOTIFYICON_ShowTrayMenu:
-	 	if (CANCEL_TRAY_MENU = True) 
+	 	if (CANCEL_TRAY_MENU = True)
 		 	CANCEL_TRAY_MENU := False
 		else
 			Menu, Tray, Show
 	return
-} 
+}

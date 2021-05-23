@@ -43,7 +43,7 @@
 		if (isCurrencyListed=True)
 			Break
 	}
-	if (!currencyFullName && dontWriteLogs=False) ; Unknown currency name 
+	if (!currencyFullName && dontWriteLogs=False) ; Unknown currency name
 		AppendToLogs(A_ThisFunc "(currency=" currency "): Unknown currency name.")
 
 	Return {Name:currencyFullName, Is_Listed:isCurrencyListed}
@@ -58,7 +58,7 @@ Do_Action(actionType, actionContent="", isHotkey=False, uniqueNum="") {
 	tabPID := isHotkey ? "" : tabContent.PID
 
 	WRITE_SEND_ACTIONS := "SEND_MSG,SEND_TO_BUYER,SEND_TO_LAST_WHISPER,SEND_TO_LAST_WHISPER_SENT"
-						. ",INVITE_BUYER,TRADE_BUYER,KICK_BUYER,KICK_MYSELF"
+						. ",INVITE_BUYER,TRADE_BUYER,KICK_BUYER,KICK_MYSELF,WHOIS_SELLER"
 						. ",CMD_AFK,CMD_AUTOREPLY,CMD_DND,CMD_HIDEOUT,CMD_OOS,CMD_REMAINING"
 
 	WRITE_DONT_SEND_ACTIONS := "WRITE_MSG,WRITE_TO_BUYER,WRITE_TO_LAST_WHISPER,WRITE_TO_LAST_WHISPER_SENT,CMD_WHOIS"
@@ -71,7 +71,7 @@ Do_Action(actionType, actionContent="", isHotkey=False, uniqueNum="") {
 		. "`n" "ignoreFollowingActions=""" ignoreFollowingActions """, prevActionType=""" prevActionType """, prevActionContent=""" prevActionContent """.")
 		Return
 	}
-	
+
 
 	global ACTIONS_FORCED_CONTENT
 	if (ACTIONS_FORCED_CONTENT[actionType]) && !(actionContent)
@@ -161,7 +161,7 @@ Do_Action(actionType, actionContent="", isHotkey=False, uniqueNum="") {
 	else if (actionType = "SHOW_GRID")
 		GUI_Trades.ShowActiveTabItemGrid()
 
-	prevNum := uniqueNum, prevActionType := actionType, prevActionContent := actionContentWithVariables	
+	prevNum := uniqueNum, prevActionType := actionType, prevActionContent := actionContentWithVariables
 }
 
 Get_Changelog(removeTrails=False) {
@@ -264,7 +264,7 @@ Get_TabsSkinAssetsAndSettings() {
 
 		for key, value in keysAndValues	{
 			SplitPath, value, , , fileExt
-			if IsIn(fileExt, "jpg,png,ico,jpeg,gif,bmp") 
+			if IsIn(fileExt, "jpg,png,ico,jpeg,gif,bmp")
 				skinAssets[A_LoopField][key] := skinFolder "\" value
 			else
 				skinAssets[A_LoopField][key] := value
@@ -333,7 +333,7 @@ Get_CompactSkinAssetsAndSettings() {
 
 		for key, value in keysAndValues	{
 			SplitPath, value, , , fileExt
-			if IsIn(fileExt, "jpg,png,ico,jpeg,gif,bmp") 
+			if IsIn(fileExt, "jpg,png,ico,jpeg,gif,bmp")
 				skinAssets[A_LoopField][key] := skinFolder "\" value
 			else
 				skinAssets[A_LoopField][key] := value
